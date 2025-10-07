@@ -1,4 +1,5 @@
 using System;
+using DG.Tweening;
 using Game.Core.Data;
 using UnityEngine;
 
@@ -6,17 +7,14 @@ namespace Game.Features.Grid.View
 {
     public class GridView : MonoBehaviour
     {
-        [Header("References")]
-        [SerializeField]
+        [Header("References")] [SerializeField]
         private GameObject _cellPrefab;
-        [SerializeField]
-        private Transform _gridContainer;
 
-        [Header("Settings")] 
-        [SerializeField] 
-        private float _cellSize = 1f;
+        [SerializeField] private Transform _gridContainer;
 
-        public event System.Action<int, int> OnCellClicked;
+        [Header("Settings")] [SerializeField] private float _cellSize = 1f;
+
+        public event Action<int, int> OnCellClicked;
 
         private GameObject[,] _cellObjects;
         private int _width;
@@ -27,14 +25,15 @@ namespace Game.Features.Grid.View
             _width = width;
             _height = height;
             _cellSize = cellSize;
-            _cellObjects = new GameObject[_width,_height];
-            Debug.Log(($"Grid initialized: {width}, {height}"));
+            _cellObjects = new GameObject[_width, _height];
+            Debug.Log($"GridView initialized: {width}x{height}");
         }
 
-        public void RenderGrid(CellData[,] cells)
+        public void CreateGrid(CellData[,] cells)
         {
             ClearGrid();
-            for (int x = 0; x < _height; x++)
+
+            for (int x = 0; x < _width; x++)
             {
                 for (int y = 0; y < _height; y++)
                 {
@@ -43,10 +42,105 @@ namespace Game.Features.Grid.View
                     {
                         continue;
                     }
+
                     CreateCellVisual(x, y, cell);
                 }
             }
-            Debug.Log("Grid rendered");
+            Debug.Log("Grid created");
+        }
+
+        public void RemoveCell(int x, int y)
+        {
+            if (!IsValidPosition(x, y))
+            {
+                return;
+            }
+
+            GameObject cellObj = _cellObjects[x, y];
+
+            if (cellObj != null)
+            {
+                Destroy(cellObj);
+                _cellObjects[x, y] = null;
+            }
+        }
+
+        public void MoveCellAnimated(int fromX, int fromY, int toX, int toY, 
+            float duration, float initialVelocity, float gravity, System.Action onComplete)
+        {
+            if (!IsValidPosition(fromX, fromY) || !IsValidPosition(toX, toY))
+            {
+                onComplete?.Invoke();
+                return;
+            }
+    
+            GameObject cellObj = _cellObjects[fromX, fromY];
+    
+            if (cellObj == null)
+            {
+                onComplete?.Invoke();
+                return;
+            }
+    
+            _cellObjects[toX, toY] = cellObj;
+            _cellObjects[fromX, fromY] = null;
+            Vector3 startPos = cellObj.transform.position;
+            Vector3 targetPos = CalculateWorldPosition(toX, toY);
+            float distance = Vector3.Distance(startPos, targetPos);
+            cellObj.name = $"Cell_{toX}_{toY}";
+            CellInput input = cellObj.GetComponent<CellInput>();
+            if (input != null)
+            {
+                input.Initialize(toX, toY, this);
+            }
+    
+            Sequence sequence = DOTween.Sequence();
+    
+            sequence.Append(
+                DOTween.To(() => 0f, t =>
+                        {
+                            float currentDistance = initialVelocity * t + 0.5f * gravity * t * t;
+                            float t01 = currentDistance / distance;
+                            t01 = Mathf.Clamp01(t01);
+                            cellObj.transform.position = Vector3.Lerp(startPos, targetPos, t01);
+                        },
+                        duration,
+                        duration)
+                    .SetEase(Ease.Linear)
+            );
+    
+            sequence.OnComplete(() =>
+            {
+                cellObj.transform.position = targetPos; 
+                onComplete?.Invoke();
+            });
+        }
+
+        public void UpdateCell(int x, int y, CellData cellData)
+        {
+            if (!IsValidPosition(x, y))
+            {
+                Debug.LogWarning($"Invalid position: ({x},{y})");
+                return;
+            }
+
+            GameObject cellObj = _cellObjects[x, y];
+
+            if (cellData.IsEmpty)
+            {
+                RemoveCell(x, y);
+            }
+            else
+            {
+                if (cellObj == null)
+                {
+                    CreateCellVisual(x, y, cellData);
+                }
+                else
+                {
+                    SetCellColor(cellObj, cellData.Type);
+                }
+            }
         }
 
         private void CreateCellVisual(int x, int y, CellData cell)
@@ -56,19 +150,22 @@ namespace Game.Features.Grid.View
             Vector3 worldPos = CalculateWorldPosition(x, y);
             cellObj.transform.position = worldPos;
             SetCellColor(cellObj, cell.Type);
+
             CellInput input = cellObj.GetComponent<CellInput>();
-            if (input==null)
+            if (input == null)
             {
                 input = cellObj.AddComponent<CellInput>();
             }
+
             input.Initialize(x, y, this);
+
             _cellObjects[x, y] = cellObj;
         }
 
         private void SetCellColor(GameObject cellObj, CellType cellType)
         {
             SpriteRenderer spriteRenderer = cellObj.GetComponent<SpriteRenderer>();
-            if (spriteRenderer==null)
+            if (spriteRenderer == null)
             {
                 Debug.LogError("Cell prefab needs SpriteRenderer");
                 return;
@@ -78,8 +175,8 @@ namespace Game.Features.Grid.View
             {
                 CellType.Red => Color.red,
                 CellType.Green => Color.green,
-                CellType.Blue=>Color.blue,
-                CellType.Yellow=>Color.yellow,
+                CellType.Blue => Color.blue,
+                CellType.Yellow => Color.yellow,
                 _ => Color.white
             };
             spriteRenderer.color = color;
@@ -92,27 +189,36 @@ namespace Game.Features.Grid.View
                 -(_height * _cellSize) / 2f + _cellSize / 2f,
                 0
             );
-            return new Vector3(offset.x + (x * _cellSize), offset.y + (y * _cellSize));
+            return new Vector3(offset.x + (x * _cellSize), offset.y + (y * _cellSize), 0);
+        }
+
+        private bool IsValidPosition(int x, int y)
+        {
+            return x >= 0 && x < _width && y >= 0 && y < _height;
         }
 
         public void HandleCellClick(int x, int y)
         {
-            Debug.Log($"Cell clicked: {x}, {y}");
-            OnCellClicked?.Invoke(x,y);
+            Debug.Log($"Cell clicked: ({x}, {y})");
+            OnCellClicked?.Invoke(x, y);
         }
 
         private void ClearGrid()
         {
-            if (_cellObjects==null)
+            if (_cellObjects == null)
             {
                 return;
             }
-            for(int x=0; x<_width; x++)
+
+            for (int x = 0; x < _width; x++)
             {
                 for (int y = 0; y < _height; y++)
                 {
-                    Destroy(_cellObjects[x,y]);
-                    _cellObjects[x, y] = null;
+                    if (_cellObjects[x, y] != null)
+                    {
+                        Destroy(_cellObjects[x, y]);
+                        _cellObjects[x, y] = null;
+                    }
                 }
             }
         }

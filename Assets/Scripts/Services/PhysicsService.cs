@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 namespace Game.Services
@@ -19,8 +18,8 @@ namespace Game.Services
         {
             float distance = _cellSize;
             float duration = SolveTimeForDistance(distance, initialVelocity);
-            float finalDuration = Mathf.Max(duration, 0.05f);
-            return finalDuration;
+  
+            return duration;
         }
 
         public float CalculateVelocity(float initialVelocity, float stepDuration)
@@ -35,7 +34,7 @@ namespace Game.Services
             float c = -distance;
 
             float discriminant = (b * b) - (4 * a * c);
-            if (discriminant<0)
+            if (discriminant < 0)
             {
                 return 0.1f;
             }

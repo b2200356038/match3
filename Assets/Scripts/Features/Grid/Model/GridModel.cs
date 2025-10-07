@@ -18,6 +18,9 @@ namespace Game.Features.Grid.Model
         public int Width { get; private set; }
         public int Height { get; private set; }
         public CellData[,] Cells =>_cells;
+        
+        private Dictionary<Vector2Int, float> _cellVelocities = new Dictionary<Vector2Int, float>();
+
 
         public GridModel(GridConfig config)
         {
@@ -39,7 +42,6 @@ namespace Game.Features.Grid.Model
                 }
             }
             OnGridChanged?.Invoke(_cells);
-            Debug.Log($"Grid initialized: {Width}x{Height}");
         }
 
 
@@ -47,7 +49,7 @@ namespace Game.Features.Grid.Model
         {
             if (IsValidPosition(x, y)) 
                 return _cells[x, y];
-            return new CellData(CellType.Red, new Vector2Int(0, 0), CellState.Idle);
+            return new CellData(CellType.Red, new Vector2Int(0, 0));
 
         }
 
@@ -138,6 +140,21 @@ namespace Game.Features.Grid.Model
                 output += row + "\n";
             }
             Debug.Log(output);
+        }
+        public float GetCellVelocity(int x, int y)
+        {
+            Vector2Int key = new Vector2Int(x, y);
+            return _cellVelocities.ContainsKey(key) ? _cellVelocities[key] : 0f;
+        }
+        public void SetCellVelocity(int x, int y, float velocity)
+        {
+            Vector2Int key = new Vector2Int(x, y);
+            _cellVelocities[key] = velocity;
+        }
+        public void ClearCellVelocity(int x, int y)
+        {
+            Vector2Int key = new Vector2Int(x, y);
+            _cellVelocities.Remove(key);
         }
     }
 }
