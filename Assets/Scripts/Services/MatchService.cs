@@ -19,8 +19,9 @@ namespace Game.Services
         public List<Vector2Int> FindMatches(int startX, int startY)
         {
             CellData startCell = _gridModel.GetCell(startX, startY);
+            Debug.Log(startCell.Type);
             List<Vector2Int> matches = new List<Vector2Int>();
-            if (startCell.IsEmpty || startCell.CanClick)
+            if (startCell.IsEmpty || !startCell.CanClick)
             {
                 return new List<Vector2Int>();
             }
@@ -54,6 +55,54 @@ namespace Game.Services
             FindMatchesDFS(x+1, y, targetType, matches, visited);
             FindMatchesDFS(x, y - 1, targetType, matches, visited);
             FindMatchesDFS(x-1, y , targetType, matches, visited);
+        }
+
+        public Dictionary<int, List<Vector2Int>> FindAllMatches()
+        {
+            var allMatches = new Dictionary<int, List<Vector2Int>>();
+            var globalVisited = new bool[_gridModel.Width, _gridModel.Height];
+            int matchId=0;
+            for (int x = 0; x < _gridModel.Width; x++)
+            {
+                for (int y = 0; y < _gridModel.Height; y++)
+                {
+                    if (globalVisited[x,y])
+                    {
+                        continue;
+                    }
+
+                    CellData cell = _gridModel.GetCell(x, y);
+                    if (cell.IsEmpty || !cell.CanClick)
+                    {
+                        continue;
+                    }
+
+                    List<Vector2Int> matches = new List<Vector2Int>();
+                    bool[,] visited = new bool[_gridModel.Width, _gridModel.Height];
+                    FindMatchesDFS(x,y,cell.Type,matches,visited);
+                    if (matches.Count<_minMatchCount)
+                    {
+                        allMatches[matchId] = matches;
+                        matchId++;
+                        foreach (var pos in matches)
+                        {
+                            globalVisited[pos.x, pos.y] = true;
+                        }
+                    }
+                }
+            }
+            Debug.Log($"Found {allMatches.Count} match groups in grid");
+            return allMatches;
+        }
+
+        public bool HasMatchAt(int x, int y)
+        {
+            return FindMatches(x, y).Count >= _minMatchCount;
+        }
+
+        public bool HasAnyMatches()
+        {
+            return FindAllMatches().Count > 0;
         }
     }
 }
