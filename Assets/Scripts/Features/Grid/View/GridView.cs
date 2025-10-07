@@ -57,7 +57,6 @@ namespace Game.Features.Grid.View
             }
 
             GameObject cellObj = _cellObjects[x, y];
-
             if (cellObj != null)
             {
                 Destroy(cellObj);
@@ -66,22 +65,14 @@ namespace Game.Features.Grid.View
         }
 
         public void MoveCellAnimated(int fromX, int fromY, int toX, int toY, 
-            float duration, float initialVelocity, float gravity, System.Action onComplete)
+            float duration, float initialVelocity, float gravity, Action onComplete)
         {
-            if (!IsValidPosition(fromX, fromY) || !IsValidPosition(toX, toY))
-            {
-                onComplete?.Invoke();
-                return;
-            }
-    
             GameObject cellObj = _cellObjects[fromX, fromY];
-    
             if (cellObj == null)
             {
                 onComplete?.Invoke();
                 return;
             }
-    
             _cellObjects[toX, toY] = cellObj;
             _cellObjects[fromX, fromY] = null;
             Vector3 startPos = cellObj.transform.position;
@@ -93,9 +84,7 @@ namespace Game.Features.Grid.View
             {
                 input.Initialize(toX, toY, this);
             }
-    
             Sequence sequence = DOTween.Sequence();
-    
             sequence.Append(
                 DOTween.To(() => 0f, t =>
                         {
@@ -108,19 +97,16 @@ namespace Game.Features.Grid.View
                         duration)
                     .SetEase(Ease.Linear)
             );
-    
             sequence.OnComplete(() =>
             {
                 cellObj.transform.position = targetPos; 
                 onComplete?.Invoke();
             });
         }
-
         public void UpdateCell(int x, int y, CellData cellData)
         {
             if (!IsValidPosition(x, y))
             {
-                Debug.LogWarning($"Invalid position: ({x},{y})");
                 return;
             }
 
@@ -142,7 +128,6 @@ namespace Game.Features.Grid.View
                 }
             }
         }
-
         private void CreateCellVisual(int x, int y, CellData cell)
         {
             GameObject cellObj = Instantiate(_cellPrefab, _gridContainer);
@@ -150,27 +135,21 @@ namespace Game.Features.Grid.View
             Vector3 worldPos = CalculateWorldPosition(x, y);
             cellObj.transform.position = worldPos;
             SetCellColor(cellObj, cell.Type);
-
             CellInput input = cellObj.GetComponent<CellInput>();
             if (input == null)
             {
                 input = cellObj.AddComponent<CellInput>();
             }
-
             input.Initialize(x, y, this);
-
             _cellObjects[x, y] = cellObj;
         }
-
         private void SetCellColor(GameObject cellObj, CellType cellType)
         {
             SpriteRenderer spriteRenderer = cellObj.GetComponent<SpriteRenderer>();
             if (spriteRenderer == null)
             {
-                Debug.LogError("Cell prefab needs SpriteRenderer");
                 return;
             }
-
             Color color = cellType switch
             {
                 CellType.Red => Color.red,
@@ -181,7 +160,6 @@ namespace Game.Features.Grid.View
             };
             spriteRenderer.color = color;
         }
-
         private Vector3 CalculateWorldPosition(int x, int y)
         {
             Vector3 offset = new Vector3(
@@ -191,25 +169,21 @@ namespace Game.Features.Grid.View
             );
             return new Vector3(offset.x + (x * _cellSize), offset.y + (y * _cellSize), 0);
         }
-
         private bool IsValidPosition(int x, int y)
         {
             return x >= 0 && x < _width && y >= 0 && y < _height;
         }
-
         public void HandleCellClick(int x, int y)
         {
             Debug.Log($"Cell clicked: ({x}, {y})");
             OnCellClicked?.Invoke(x, y);
         }
-
         private void ClearGrid()
         {
             if (_cellObjects == null)
             {
                 return;
             }
-
             for (int x = 0; x < _width; x++)
             {
                 for (int y = 0; y < _height; y++)
@@ -222,7 +196,6 @@ namespace Game.Features.Grid.View
                 }
             }
         }
-
         private void OnDestroy()
         {
             ClearGrid();

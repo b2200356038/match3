@@ -11,7 +11,6 @@ namespace Game.Services
         {
             _gravity = gravity;
             _cellSize = cellSize;
-            Debug.Log(($"Physics created: gravity:{_gravity}, cell size:{_cellSize} "));
         }
 
         public float CalculateFallDuration(float initialVelocity)
@@ -38,7 +37,6 @@ namespace Game.Services
             {
                 return 0.1f;
             }
-
             float sqrtDisc = Mathf.Sqrt(discriminant);
             float t1 = (-b + sqrtDisc) / (2 * a);
             float t2 = (-b - sqrtDisc) / (2 * a);

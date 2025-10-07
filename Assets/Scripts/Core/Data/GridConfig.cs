@@ -6,6 +6,7 @@ namespace Game.Core.Data
     [CreateAssetMenu(fileName = "GridConfig", menuName = "Game/Grid Config")]
     public class GridConfig : ScriptableObject
     {
+        
         [Header("Grid Dimensions")] [SerializeField]
         private int width = 8;
 
@@ -23,7 +24,10 @@ namespace Game.Core.Data
         private int startingMoves = 20;
 
         [SerializeField] private int targetMatches = 10;
+        [Header("Animation")]
 
+        [SerializeField] public float gravity = 20f;
+        [SerializeField] public float cascadeDelay = 0.02f;
         public int Width => width;
         public int Height => height;
         public float CellSize => cellSize;

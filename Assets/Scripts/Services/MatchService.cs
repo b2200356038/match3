@@ -40,11 +40,8 @@ namespace Game.Services
         {
             if (!_gridModel.IsValidPosition(x, y))
                 return;
-    
-    
             if (visited[x, y])
                 return;
-    
             CellData cell = _gridModel.GetCell(x, y);
             if (cell.Type != targetType || cell.IsEmpty || cell.State != CellState.Idle)
                 return;
@@ -56,7 +53,6 @@ namespace Game.Services
             FindMatchesDFS(x, y - 1, targetType, matches, visited);
             FindMatchesDFS(x-1, y , targetType, matches, visited);
         }
-
         public Dictionary<int, List<Vector2Int>> FindAllMatches()
         {
             var allMatches = new Dictionary<int, List<Vector2Int>>();
@@ -91,7 +87,6 @@ namespace Game.Services
                     }
                 }
             }
-            Debug.Log($"Found {allMatches.Count} match groups in grid");
             return allMatches;
         }
 

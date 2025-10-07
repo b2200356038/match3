@@ -9,11 +9,9 @@ namespace Game.Features.Grid.Model
     public class GridModel
     {
         public event Action<CellData[,]> OnGridChanged;
-        public event Action<List<Vector2Int>> OnCellsMathced;
-        public event Action<List<Vector2Int>> OnCellsRemoved;
 
         private CellData[,] _cells;
-        private GridConfig _config;
+        private GridConfig _gridConfig;
         
         public int Width { get; private set; }
         public int Height { get; private set; }
@@ -22,11 +20,11 @@ namespace Game.Features.Grid.Model
         private Dictionary<Vector2Int, float> _cellVelocities = new Dictionary<Vector2Int, float>();
 
 
-        public GridModel(GridConfig config)
+        public GridModel(GridConfig gridConfig)
         {
-            _config = config;
-            Width = _config.Width;
-            Height = _config.Height;
+            _gridConfig = gridConfig;
+            Width = _gridConfig.Width;
+            Height = _gridConfig.Height;
         }
 
         public void InitializeGrid()
@@ -105,7 +103,7 @@ namespace Game.Features.Grid.Model
 
         private CellType GetRandomCellType()
         {
-            int random = UnityEngine.Random.Range(0, _config.ColorCount);
+            int random = UnityEngine.Random.Range(0, _gridConfig.ColorCount);
             return random switch
             {
                 0=> CellType.Red,
