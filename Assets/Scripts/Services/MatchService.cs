@@ -15,11 +15,9 @@ namespace Game.Services
             _gridModel = gridModel;
             _minMatchCount = minMatchCount;
         }
-    
         public List<Vector2Int> FindMatches(int startX, int startY)
         {
             CellData startCell = _gridModel.GetCell(startX, startY);
-            Debug.Log(startCell.Type);
             List<Vector2Int> matches = new List<Vector2Int>();
             if (startCell.IsEmpty || !startCell.CanClick)
             {
@@ -101,4 +99,3 @@ namespace Game.Services
         }
     }
 }
-

@@ -13,9 +13,11 @@ MonoBehaviour:
   m_Name: GridConfig
   m_EditorClassIdentifier: Assembly-CSharp::Game.Core.Data.GridConfig
   width: 8
-  height: 8
+  height: 16
   cellSize: 1
   colorCount: 4
   minMatchCount: 2
   startingMoves: 20
   targetMatches: 10
+  gravity: 30
+  cascadeDelay: 0.025

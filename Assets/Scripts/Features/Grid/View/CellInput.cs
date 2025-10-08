@@ -3,7 +3,7 @@ using UnityEngine.EventSystems;
 
 namespace Game.Features.Grid.View
 {
-    public class CellInput: MonoBehaviour, IPointerClickHandler
+    public class CellInput: MonoBehaviour, IPointerDownHandler
     {
         private int _x;
         private int _y;
@@ -16,7 +16,7 @@ namespace Game.Features.Grid.View
             _gridView = gridView;
         }
 
-        public void OnPointerClick(PointerEventData eventData)
+        public void OnPointerDown(PointerEventData eventData)
         {
             _gridView.HandleCellClick(_x,_y);
         }

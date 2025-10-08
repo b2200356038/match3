@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Game.Core.Data;
 using UnityEngine;
@@ -8,23 +7,21 @@ namespace Game.Features.Grid.Model
 {
     public class GridModel
     {
-        public event Action<CellData[,]> OnGridChanged;
-
         private CellData[,] _cells;
         private GridConfig _gridConfig;
-        
+        private int _spawnRows = 1;
+        public int VisibleHeight { get; private set; }
         public int Width { get; private set; }
         public int Height { get; private set; }
         public CellData[,] Cells =>_cells;
-        
-        private Dictionary<Vector2Int, float> _cellVelocities = new Dictionary<Vector2Int, float>();
 
 
         public GridModel(GridConfig gridConfig)
         {
             _gridConfig = gridConfig;
-            Width = _gridConfig.Width;
-            Height = _gridConfig.Height;
+            Width = gridConfig.Width;
+            VisibleHeight = gridConfig.Height;
+            Height = VisibleHeight + _spawnRows;
         }
 
         public void InitializeGrid()
@@ -32,14 +29,27 @@ namespace Game.Features.Grid.Model
             _cells = new CellData[Width, Height];
             for (int x = 0; x < Width; x++)
             {
-                for (int y = 0; y < Height; y++)
+                for (int y = 0; y < Height-1; y++)
                 {
                     CellType randomType = GetRandomCellType();
                     Vector2Int position = new Vector2Int(x, y);
                     _cells[x, y] = new CellData(randomType, position);
                 }
+                int spawnY = Height - 1;
+                _cells[x, spawnY] = new CellData(CellType.Empty, new Vector2Int(x, spawnY));
             }
-            OnGridChanged?.Invoke(_cells);
+        }
+        
+        public void SpawnCellAtTop(int x)
+        {
+            int spawnY = Height - 1;
+        
+            if (!_cells[x, spawnY].IsEmpty)
+            {
+                return;
+            }
+            CellType newType = GetRandomCellType();
+            _cells[x, spawnY] = new CellData(newType, new Vector2Int(x, spawnY));
         }
 
 
@@ -56,7 +66,6 @@ namespace Game.Features.Grid.Model
             if (IsValidPosition(x, y))
             {
                 _cells[x, y] = cellData;
-                OnGridChanged?.Invoke(_cells);
             }
         }
         
@@ -65,7 +74,6 @@ namespace Game.Features.Grid.Model
             if (IsValidPosition(x, y))
             {
                 _cells[x, y] = _cells[x, y].WithState(newState);
-                OnGridChanged?.Invoke(_cells);
             }
         }
 
@@ -74,7 +82,6 @@ namespace Game.Features.Grid.Model
             if (IsValidPosition(x, y))
             {
                 _cells[x, y] = _cells[x, y].WithType(newType);
-                OnGridChanged?.Invoke(_cells);
             }
         }
         
@@ -83,7 +90,6 @@ namespace Game.Features.Grid.Model
             if (IsValidPosition(x, y))
             {
                 SetCellType(x,y, CellType.Empty);
-                OnGridChanged?.Invoke(_cells);
             }
         }
 
@@ -96,6 +102,7 @@ namespace Game.Features.Grid.Model
         {
             if (IsValidPosition(x, y))
             {
+                Debug.Log(_cells[x,y].State == CellState.Idle);
                 return _cells[x, y].CanClick;
             }
             return false;
@@ -138,21 +145,6 @@ namespace Game.Features.Grid.Model
                 output += row + "\n";
             }
             Debug.Log(output);
-        }
-        public float GetCellVelocity(int x, int y)
-        {
-            Vector2Int key = new Vector2Int(x, y);
-            return _cellVelocities.ContainsKey(key) ? _cellVelocities[key] : 0f;
-        }
-        public void SetCellVelocity(int x, int y, float velocity)
-        {
-            Vector2Int key = new Vector2Int(x, y);
-            _cellVelocities[key] = velocity;
-        }
-        public void ClearCellVelocity(int x, int y)
-        {
-            Vector2Int key = new Vector2Int(x, y);
-            _cellVelocities.Remove(key);
         }
     }
 }
