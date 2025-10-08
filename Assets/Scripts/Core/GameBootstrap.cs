@@ -9,11 +9,11 @@ namespace Game.Core
 {
     public class GameBootstrap : MonoBehaviour
     {
-        [Header("Configuration")] [SerializeField]
-        private GridConfig _gridConfig;
+        [Header("Configuration")] 
+        [SerializeField] private GridConfig _gridConfig;
 
-        [Header("View Reference")] [SerializeField]
-        private GridView _gridView;
+        [Header("View Reference")] 
+        [SerializeField] private GridView _gridView;
 
         private GridModel _gridModel;
         private GridPresenter _gridPresenter;
@@ -39,12 +39,18 @@ namespace Game.Core
                 return;
             }
 
+
             _gridModel = new GridModel(_gridConfig);
+
             _matchService = new MatchService(_gridModel, _gridConfig.MinMatchCount);
             _physicsService = new PhysicsService(_gridConfig.gravity, _gridConfig.CellSize);
             _refillService = new RefillService(_gridModel, _gridConfig);
             _cascadeService = new CascadeService(_gridModel, _gridView, _physicsService, _gridConfig);
+            
+
             _gridView.Initialize(_gridConfig.Width, _gridConfig.Height, _gridConfig.CellSize);
+            
+
             _gridPresenter = new GridPresenter(_gridModel, _gridView, _matchService, _cascadeService, _gridConfig);
             _gridPresenter.Initialize();
             _gridPresenter.StartGame();
