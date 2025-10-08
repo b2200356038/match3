@@ -1,22 +1,19 @@
 using System.Collections.Generic;
 using Game.Core.Data;
-using Game.Services;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 namespace Game.Features.Grid.Model
 {
     public class GridModel
     {
-        private CellData[,] _cells;
+        private CellData[,] _slots;
         private GridConfig _gridConfig;
-        private readonly RefillService _refillService;
         private int _spawnRows = 1;
+
         public int VisibleHeight { get; private set; }
         public int Width { get; private set; }
         public int Height { get; private set; }
-        public CellData[,] Cells =>_cells;
-
+        public CellData[,] Slots => _slots;
 
         public GridModel(GridConfig gridConfig)
         {
@@ -28,71 +25,61 @@ namespace Game.Features.Grid.Model
 
         public void InitializeGrid()
         {
-            _cells = new CellData[Width, Height];
+            _slots = new CellData[Width, Height];
             for (int x = 0; x < Width; x++)
             {
-                for (int y = 0; y < Height-1; y++)
+                for (int y = 0; y < Height - 1; y++)
                 {
-                    CellType randomType = GetRandomCellType();
-                    Vector2Int position = new Vector2Int(x, y);
-                    _cells[x, y] = new CellData(randomType, position);
+                    CubeType randomCube = GetRandomCubeType();
+                    _slots[x, y] = new CellData(randomCube, new Vector2Int(x, y));
                 }
+
                 int spawnY = Height - 1;
-                _cells[x, spawnY] = new CellData(CellType.Empty, new Vector2Int(x, spawnY));
+                _slots[x, spawnY] = CellData.CreateEmpty(new Vector2Int(x, spawnY));
             }
         }
-        
+
         public void SpawnCellAtTop(int x)
         {
             int spawnY = Height - 1;
-        
-            if (!_cells[x, spawnY].IsEmpty)
+
+            if (!_slots[x, spawnY].IsEmpty)
             {
                 return;
             }
 
-            CellType newType = GetRandomCellType();
-            _cells[x, spawnY] = new CellData(newType, new Vector2Int(x, spawnY));
+            CubeType cubeType = GetRandomCubeType();
+            _slots[x, spawnY] = new CellData(cubeType, new Vector2Int(x, spawnY));
         }
 
-
-        public CellData GetCell(int x, int y)
+        public CellData GetSlot(int x, int y)
         {
-            if (IsValidPosition(x, y)) 
-                return _cells[x, y];
-            return new CellData(CellType.Red, new Vector2Int(0, 0));
-
+            if (IsValidPosition(x, y))
+                return _slots[x, y];
+            return CellData.CreateEmpty(new Vector2Int(0, 0));
         }
 
-        public void SetCell(int x, int y, CellData cellData)
+        public void SetSlot(int x, int y, CellData slotData)
         {
             if (IsValidPosition(x, y))
             {
-                _cells[x, y] = cellData;
-            }
-        }
-        
-        public void SetCellState(int x, int y, CellState newState)
-        {
-            if (IsValidPosition(x, y))
-            {
-                _cells[x, y] = _cells[x, y].WithState(newState);
+                _slots[x, y] = slotData;
             }
         }
 
-        public void SetCellType(int x, int y, CellType newType)
+        public void SetSlotState(int x, int y, CellState newState)
         {
             if (IsValidPosition(x, y))
             {
-                _cells[x, y] = _cells[x, y].WithType(newType);
+                _slots[x, y] = _slots[x, y].WithState(newState);
             }
         }
-        
-        public void ClearCell(int x, int y)
+
+        public void ClearSlot(int x, int y)
         {
             if (IsValidPosition(x, y))
             {
-                SetCellType(x,y, CellType.Empty);
+                _slots[x, y] = CellData.CreateEmpty(new Vector2Int(x, y));
             }
         }
 
@@ -101,53 +88,27 @@ namespace Game.Features.Grid.Model
             return x >= 0 && x < Width && y >= 0 && y < Height;
         }
 
-        public bool IsCellClickable(int x, int y)
+        public bool IsSlotClickable(int x, int y)
         {
             if (IsValidPosition(x, y))
             {
-                Debug.Log(_cells[x,y].State == CellState.Idle);
-                return _cells[x, y].CanClick;
+                return _slots[x, y].CanClick;
             }
+
             return false;
         }
 
-        private CellType GetRandomCellType()
+        private CubeType GetRandomCubeType()
         {
-            int random = UnityEngine.Random.Range(0, _gridConfig.ColorCount);
+            int random = Random.Range(0, _gridConfig.ColorCount);
             return random switch
             {
-                0=> CellType.Red,
-                1=>CellType.Blue,
-                2=>CellType.Green,
-                3=>CellType.Yellow,
-                _ => CellType.Empty
+                0 => CubeType.Red,
+                1 => CubeType.Blue,
+                2 => CubeType.Green,
+                3 => CubeType.Yellow,
+                _ => CubeType.Red
             };
-
-        }
-        public void PrintGrid()
-        {
-            string output = "---Grid State---\n";
-            for (int y = Height-1; y >=0; y--)
-            {
-                string row = $"Row {y}:";
-                for (int x = 0; x < Width; x++)
-                {
-                    CellData cell = _cells[x, y];
-                    string cellStr = cell.Type switch
-                    {
-                        CellType.Red => "R",
-                        CellType.Blue => "B",
-                        CellType.Green => "G",
-                        CellType.Yellow => "Y",
-                        CellType.Empty => "-",
-                        _ => "?"
-                    };
-                    row += cellStr;
-                }
-
-                output += row + "\n";
-            }
-            Debug.Log(output);
         }
     }
 }

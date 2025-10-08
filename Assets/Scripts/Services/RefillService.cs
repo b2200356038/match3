@@ -15,17 +15,17 @@ namespace Game.Services
             _gridConfig = gridConfig;
         }
 
-        public CellType GetRandomCellType()
+        public CubeType GetRandomCellType()
         {
             int random = Random.Range(0, _gridConfig.ColorCount);
             
             return random switch
             {
-                0 => CellType.Red,
-                1 => CellType.Blue,
-                2 => CellType.Green,
-                3 => CellType.Yellow,
-                _ => CellType.Red
+                0 => CubeType.Red,
+                1 => CubeType.Blue,
+                2 => CubeType.Green,
+                3 => CubeType.Yellow,
+                _ => CubeType.Red
             };
         }
     }

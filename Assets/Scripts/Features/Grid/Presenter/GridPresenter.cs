@@ -14,6 +14,7 @@ namespace Game.Features.Grid.Presenter
         private readonly MatchService _matchService;
         private readonly CascadeService _cascadeService;
         private readonly GridConfig _gridConfig;
+
         public GridPresenter(GridModel gridModel, GridView gridView, MatchService matchService,
             CascadeService cascadeService, GridConfig gridConfig)
         {
@@ -37,27 +38,37 @@ namespace Game.Features.Grid.Presenter
         public void StartGame()
         {
             _gridModel.InitializeGrid();
-            _gridView.CreateGrid(_gridModel.Cells);
+            _gridView.CreateGrid(_gridModel.Slots);
         }
 
         private void HandleCellClick(int x, int y)
         {
-            if (!_gridModel.IsCellClickable(x, y))
+            if (!_gridModel.IsSlotClickable(x, y))
             {
                 return;
             }
-            var matches = _matchService.FindMatches(x, y);
-            if (matches.Count < _gridConfig.MinMatchCount)
+            CellData clickedSlot = _gridModel.GetSlot(x, y);
+            if (clickedSlot.IsPowerUp)
             {
+                // TODO: PowerUp activation
                 return;
             }
-            ProcessMatches(matches);
+            if (clickedSlot.IsCube)
+            {
+                var matches = _matchService.FindMatches(x, y);
+                if (matches.Count < _gridConfig.MinMatchCount)
+                {
+                    return;
+                }
+                ProcessMatches(matches);
+            }
         }
+
         private void ProcessMatches(List<Vector2Int> matches)
         {
             foreach (var pos in matches)
             {
-                _gridModel.ClearCell(pos.x, pos.y);
+                _gridModel.ClearSlot(pos.x, pos.y);
                 _gridView.RemoveCell(pos.x, pos.y);
             }
             _cascadeService.ProcessCascades(matches);

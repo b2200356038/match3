@@ -21,6 +21,7 @@ namespace Game.Services
             _physicsService = physicsService;
             _gridConfig = gridConfig;
         }
+
         public void ProcessCascades(List<Vector2Int> matches)
         {
             foreach (var match in matches)
@@ -29,7 +30,7 @@ namespace Game.Services
             }
         }
 
-        private void CheckAbove(int x, int y , float initialVelocity)
+        private void CheckAbove(int x, int y, float initialVelocity)
         {
             int aboveY = y + 1;
     
@@ -42,16 +43,16 @@ namespace Game.Services
             {
                 if (aboveY == _gridModel.VisibleHeight)
                 {
-                    CellData spawnCell = _gridModel.GetCell(x, aboveY);
-                    if (spawnCell.IsEmpty)
+                    CellData spawnSlot = _gridModel.GetSlot(x, aboveY);
+                    if (spawnSlot.IsEmpty)
                     {
                         SpawnNewCellAtTop(x);
                         FallOneStep(x, aboveY, initialVelocity);
                     }
                 }
                 
-                CellData aboveCell = _gridModel.GetCell(x, aboveY);
-                if (!aboveCell.IsEmpty && aboveCell.State != CellState.Moving)
+                CellData aboveSlot = _gridModel.GetSlot(x, aboveY);
+                if (aboveSlot.IsFallable && aboveSlot.State != CellState.Moving)
                 {
                     StartFalling(x, aboveY);
                 }
@@ -60,26 +61,37 @@ namespace Game.Services
 
         private void StartFalling(int x, int y)
         {
-            _gridModel.SetCellState(x, y, CellState.Moving);
+            _gridModel.SetSlotState(x, y, CellState.Moving);
             FallOneStep(x, y, 0);
         }
 
         private void FallOneStep(int x, int y, float initialVelocity)
         {
             CheckAbove(x, y, initialVelocity);
-            CellData cell = _gridModel.GetCell(x, y);
-            if (cell.IsEmpty)
+            CellData slot = _gridModel.GetSlot(x, y);
+            
+            if (slot.IsEmpty)
             {
                 return;
             }
+            
             int targetY = y - 1;
+            
             if (targetY < 0)
             {
-                _gridModel.SetCellState(x, y, CellState.Idle);
+                _gridModel.SetSlotState(x, y, CellState.Idle);
                 return;
             }
-            _gridModel.SetCell(x, targetY, cell.WithState(CellState.Moving));
-            _gridModel.ClearCell(x, y);
+            
+            CellData targetSlot = _gridModel.GetSlot(x, targetY);
+            if (!targetSlot.IsEmpty)
+            {
+                _gridModel.SetSlotState(x, y, CellState.Idle);
+                return;
+            }
+            
+            _gridModel.SetSlot(x, targetY, slot.WithState(CellState.Moving));
+            _gridModel.ClearSlot(x, y);
             
             float fallDuration = _physicsService.CalculateFallDuration(initialVelocity);
             float newVelocity = initialVelocity + _gridConfig.gravity * fallDuration;
@@ -96,13 +108,13 @@ namespace Game.Services
 
         private void OnCellFallComplete(int x, int y, float initialVelocity)
         {
-            if (y > 0 && _gridModel.GetCell(x, y - 1).IsEmpty)
+            if (y > 0 && _gridModel.GetSlot(x, y - 1).IsEmpty)
             {
                 FallOneStep(x, y, initialVelocity); 
             }
             else
             {
-                _gridModel.SetCellState(x, y, CellState.Idle);
+                _gridModel.SetSlotState(x, y, CellState.Idle);
             }
         }
 
@@ -110,8 +122,8 @@ namespace Game.Services
         {
             _gridModel.SpawnCellAtTop(x);
             int spawnY = _gridModel.Height - 1;
-            CellData spawnedCell = _gridModel.GetCell(x, spawnY);
-            _gridView.CreateCellAtSpawnPosition(x, spawnY, spawnedCell);
+            CellData spawnedSlot = _gridModel.GetSlot(x, spawnY);
+            _gridView.CreateCellAtSpawnPosition(x, spawnY, spawnedSlot);
         }
     }
 }

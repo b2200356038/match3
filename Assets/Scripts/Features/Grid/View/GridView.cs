@@ -11,9 +11,7 @@ namespace Game.Features.Grid.View
         private GameObject _cellPrefab;
 
         [SerializeField] private SpriteRenderer _backgroundSprite;
-        
         [SerializeField] private SpriteRenderer _maskSprite;
-
         [SerializeField] private Transform _gridContainer;
 
         [Header("Settings")] [SerializeField] private float _cellSize = 1f;
@@ -35,20 +33,22 @@ namespace Game.Features.Grid.View
             Debug.Log($"GridView initialized: {width}x{height} (total: {_totalHeight})");
         }
 
-        public void CreateGrid(CellData[,] cells)
+        public void CreateGrid(CellData[,] slots)
         {
             ClearGrid();
+
             for (int x = 0; x < _width; x++)
             {
                 for (int y = 0; y < _height; y++)
                 {
-                    CellData cell = cells[x, y];
-                    if (cell.IsEmpty)
+                    CellData slot = slots[x, y];
+
+                    if (slot.IsEmpty)
                     {
                         continue;
                     }
 
-                    CreateCellVisual(x, y, cell);
+                    CreateCellVisual(x, y, slot);
                 }
             }
 
@@ -57,26 +57,26 @@ namespace Game.Features.Grid.View
 
         private void UpdateBackgroundSize()
         {
-            if (_backgroundSprite==null)
+            if (_backgroundSprite == null)
             {
                 return;
             }
-            else
-            {
-                float gridWidth = _width * _cellSize;
-                float gridHeight = _height * _cellSize;
-                _backgroundSprite.size = new Vector2(gridWidth +0.2f , gridHeight+0.2f );
-                _maskSprite.size = new Vector2(gridWidth, gridHeight);
-            }
+
+            float gridWidth = _width * _cellSize;
+            float gridHeight = _height * _cellSize;
+            _backgroundSprite.size = new Vector2(gridWidth + 0.2f, gridHeight + 0.2f);
+            _maskSprite.size = new Vector2(gridWidth, gridHeight);
         }
 
-        public void CreateCellAtSpawnPosition(int x, int spawnY, CellData cellData)
+        public void CreateCellAtSpawnPosition(int x, int spawnY, CellData slotData)
         {
             Vector3 spawnPos = CalculateWorldPosition(x, spawnY);
             GameObject cellObj = Instantiate(_cellPrefab, _gridContainer);
             cellObj.transform.position = spawnPos;
             cellObj.name = $"Cell_Spawn_{x}_{spawnY}";
-            SetCellColor(cellObj, cellData.Type);
+
+            SetCellVisual(cellObj, slotData);
+
             CellInput input = cellObj.GetComponent<CellInput>();
             if (input == null)
             {
@@ -114,10 +114,13 @@ namespace Game.Features.Grid.View
 
             _cellObjects[toX, toY] = cellObj;
             _cellObjects[fromX, fromY] = null;
+
             Vector3 startPos = cellObj.transform.position;
             Vector3 targetPos = CalculateWorldPosition(toX, toY);
             float distance = Vector3.Distance(startPos, targetPos);
+
             cellObj.name = $"Cell_{toX}_{toY}";
+
             CellInput input = cellObj.GetComponent<CellInput>();
             if (input != null)
             {
@@ -145,7 +148,7 @@ namespace Game.Features.Grid.View
             });
         }
 
-        public void UpdateCell(int x, int y, CellData cellData)
+        public void UpdateCell(int x, int y, CellData slotData)
         {
             if (!IsValidPosition(x, y))
             {
@@ -154,7 +157,7 @@ namespace Game.Features.Grid.View
 
             GameObject cellObj = _cellObjects[x, y];
 
-            if (cellData.IsEmpty)
+            if (slotData.IsEmpty)
             {
                 RemoveCell(x, y);
             }
@@ -162,16 +165,16 @@ namespace Game.Features.Grid.View
             {
                 if (cellObj == null)
                 {
-                    CreateCellVisual(x, y, cellData);
+                    CreateCellVisual(x, y, slotData);
                 }
                 else
                 {
-                    SetCellColor(cellObj, cellData.Type);
+                    SetCellVisual(cellObj, slotData);
                 }
             }
         }
 
-        private void CreateCellVisual(int x, int y, CellData cell)
+        private void CreateCellVisual(int x, int y, CellData slot)
         {
             GameObject cellObj = Instantiate(_cellPrefab, _gridContainer);
             cellObj.name = $"Cell_{x}_{y}";
@@ -179,7 +182,7 @@ namespace Game.Features.Grid.View
             Vector3 worldPos = CalculateWorldPosition(x, y);
             cellObj.transform.position = worldPos;
 
-            SetCellColor(cellObj, cell.Type);
+            SetCellVisual(cellObj, slot);
 
             CellInput input = cellObj.GetComponent<CellInput>();
             if (input == null)
@@ -192,7 +195,7 @@ namespace Game.Features.Grid.View
             _cellObjects[x, y] = cellObj;
         }
 
-        private void SetCellColor(GameObject cellObj, CellType cellType)
+        private void SetCellVisual(GameObject cellObj, CellData slot)
         {
             SpriteRenderer spriteRenderer = cellObj.GetComponent<SpriteRenderer>();
             if (spriteRenderer == null)
@@ -200,14 +203,19 @@ namespace Game.Features.Grid.View
                 return;
             }
 
-            Color color = cellType switch
+            Color color = Color.white;
+
+            if (slot.IsCube)
             {
-                CellType.Red => Color.red,
-                CellType.Green => Color.green,
-                CellType.Blue => Color.blue,
-                CellType.Yellow => Color.yellow,
-                _ => Color.white
-            };
+                color = slot.CubeType.Value switch
+                {
+                    CubeType.Red => Color.red,
+                    CubeType.Green => Color.green,
+                    CubeType.Blue => Color.blue,
+                    CubeType.Yellow => Color.yellow,
+                    _ => Color.white
+                };
+            }
 
             spriteRenderer.color = color;
         }
@@ -234,7 +242,6 @@ namespace Game.Features.Grid.View
 
         public void HandleCellClick(int x, int y)
         {
-            Debug.Log($"Cell clicked: ({x}, {y})");
             OnCellClicked?.Invoke(x, y);
         }
 
