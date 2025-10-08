@@ -90,7 +90,7 @@ namespace Game.Services
 
         public bool HasMatchAt(int x, int y)
         {
-            return FindMatches(x, y).Count >= _minMatchCount;
+            return FindMatches(x, y).Count > 0 ;
         }
 
         public bool HasAnyMatches()

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Game.Core.Data;
+using Game.Services;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
@@ -9,6 +10,7 @@ namespace Game.Features.Grid.Model
     {
         private CellData[,] _cells;
         private GridConfig _gridConfig;
+        private readonly RefillService _refillService;
         private int _spawnRows = 1;
         public int VisibleHeight { get; private set; }
         public int Width { get; private set; }
@@ -48,6 +50,7 @@ namespace Game.Features.Grid.Model
             {
                 return;
             }
+
             CellType newType = GetRandomCellType();
             _cells[x, spawnY] = new CellData(newType, new Vector2Int(x, spawnY));
         }

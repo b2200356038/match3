@@ -7,25 +7,29 @@ namespace Game.Features.Grid.View
 {
     public class GridView : MonoBehaviour
     {
-        [Header("References")] 
-        [SerializeField] private GameObject _cellPrefab;
+        [Header("References")] [SerializeField]
+        private GameObject _cellPrefab;
+
+        [SerializeField] private SpriteRenderer _backgroundSprite;
+        
+        [SerializeField] private SpriteRenderer _maskSprite;
+
         [SerializeField] private Transform _gridContainer;
 
-        [Header("Settings")] 
-        [SerializeField] private float _cellSize = 1f;
+        [Header("Settings")] [SerializeField] private float _cellSize = 1f;
 
         public event Action<int, int> OnCellClicked;
 
         private GameObject[,] _cellObjects;
         private int _width;
-        private int _height;           // Görünen height
-        private int _totalHeight;      // Görünen + spawn row
+        private int _height;
+        private int _totalHeight;
 
         public void Initialize(int width, int height, float cellSize)
         {
             _width = width;
-            _height = height;           // Görünen kısım (8)
-            _totalHeight = height + 1;  // Spawn row dahil (9)
+            _height = height;
+            _totalHeight = height + 1;
             _cellSize = cellSize;
             _cellObjects = new GameObject[_width, _totalHeight];
             Debug.Log($"GridView initialized: {width}x{height} (total: {_totalHeight})");
@@ -47,7 +51,23 @@ namespace Game.Features.Grid.View
                     CreateCellVisual(x, y, cell);
                 }
             }
-            Debug.Log("Grid created");
+
+            UpdateBackgroundSize();
+        }
+
+        private void UpdateBackgroundSize()
+        {
+            if (_backgroundSprite==null)
+            {
+                return;
+            }
+            else
+            {
+                float gridWidth = _width * _cellSize;
+                float gridHeight = _height * _cellSize;
+                _backgroundSprite.size = new Vector2(gridWidth +0.2f , gridHeight+0.2f );
+                _maskSprite.size = new Vector2(gridWidth, gridHeight);
+            }
         }
 
         public void CreateCellAtSpawnPosition(int x, int spawnY, CellData cellData)
@@ -62,6 +82,7 @@ namespace Game.Features.Grid.View
             {
                 input = cellObj.AddComponent<CellInput>();
             }
+
             input.Initialize(x, spawnY, this);
             _cellObjects[x, spawnY] = cellObj;
         }
@@ -81,7 +102,7 @@ namespace Game.Features.Grid.View
             }
         }
 
-        public void MoveCellAnimated(int fromX, int fromY, int toX, int toY, 
+        public void MoveCellAnimated(int fromX, int fromY, int toX, int toY,
             float duration, float initialVelocity, float gravity, Action onComplete)
         {
             GameObject cellObj = _cellObjects[fromX, fromY];
@@ -90,7 +111,7 @@ namespace Game.Features.Grid.View
                 onComplete?.Invoke();
                 return;
             }
-            
+
             _cellObjects[toX, toY] = cellObj;
             _cellObjects[fromX, fromY] = null;
             Vector3 startPos = cellObj.transform.position;
@@ -102,27 +123,28 @@ namespace Game.Features.Grid.View
             {
                 input.Initialize(toX, toY, this);
             }
+
             Sequence sequence = DOTween.Sequence();
             sequence.Append(
                 DOTween.To(() => 0f, t =>
-                    {
-                        float currentDistance = initialVelocity * t + 0.5f * gravity * t * t;
-                        float t01 = currentDistance / distance;
-                        t01 = Mathf.Clamp01(t01);
-                        cellObj.transform.position = Vector3.Lerp(startPos, targetPos, t01);
-                    },
-                    duration,
-                    duration)
+                        {
+                            float currentDistance = initialVelocity * t + 0.5f * gravity * t * t;
+                            float t01 = currentDistance / distance;
+                            t01 = Mathf.Clamp01(t01);
+                            cellObj.transform.position = Vector3.Lerp(startPos, targetPos, t01);
+                        },
+                        duration,
+                        duration)
                     .SetEase(Ease.Linear)
             );
-            
+
             sequence.OnComplete(() =>
             {
-                cellObj.transform.position = targetPos; 
+                cellObj.transform.position = targetPos;
                 onComplete?.Invoke();
             });
         }
-        
+
         public void UpdateCell(int x, int y, CellData cellData)
         {
             if (!IsValidPosition(x, y))
@@ -148,27 +170,28 @@ namespace Game.Features.Grid.View
                 }
             }
         }
-        
+
         private void CreateCellVisual(int x, int y, CellData cell)
         {
             GameObject cellObj = Instantiate(_cellPrefab, _gridContainer);
             cellObj.name = $"Cell_{x}_{y}";
-            
+
             Vector3 worldPos = CalculateWorldPosition(x, y);
             cellObj.transform.position = worldPos;
-            
+
             SetCellColor(cellObj, cell.Type);
-            
+
             CellInput input = cellObj.GetComponent<CellInput>();
             if (input == null)
             {
                 input = cellObj.AddComponent<CellInput>();
             }
+
             input.Initialize(x, y, this);
-            
+
             _cellObjects[x, y] = cellObj;
         }
-        
+
         private void SetCellColor(GameObject cellObj, CellType cellType)
         {
             SpriteRenderer spriteRenderer = cellObj.GetComponent<SpriteRenderer>();
@@ -176,7 +199,7 @@ namespace Game.Features.Grid.View
             {
                 return;
             }
-            
+
             Color color = cellType switch
             {
                 CellType.Red => Color.red,
@@ -185,10 +208,10 @@ namespace Game.Features.Grid.View
                 CellType.Yellow => Color.yellow,
                 _ => Color.white
             };
-            
+
             spriteRenderer.color = color;
         }
-        
+
         private Vector3 CalculateWorldPosition(int x, int y)
         {
             Vector3 offset = new Vector3(
@@ -196,32 +219,32 @@ namespace Game.Features.Grid.View
                 -(_height * _cellSize) / 2f + _cellSize / 2f,
                 0
             );
-            
+
             return new Vector3(
-                offset.x + (x * _cellSize), 
-                offset.y + (y * _cellSize),  
+                offset.x + (x * _cellSize),
+                offset.y + (y * _cellSize),
                 0
             );
         }
-        
+
         private bool IsValidPosition(int x, int y)
         {
             return x >= 0 && x < _width && y >= 0 && y < _totalHeight;
         }
-        
+
         public void HandleCellClick(int x, int y)
         {
             Debug.Log($"Cell clicked: ({x}, {y})");
             OnCellClicked?.Invoke(x, y);
         }
-        
+
         private void ClearGrid()
         {
             if (_cellObjects == null)
             {
                 return;
             }
-            
+
             for (int x = 0; x < _width; x++)
             {
                 for (int y = 0; y < _totalHeight; y++)
@@ -234,7 +257,7 @@ namespace Game.Features.Grid.View
                 }
             }
         }
-        
+
         private void OnDestroy()
         {
             ClearGrid();

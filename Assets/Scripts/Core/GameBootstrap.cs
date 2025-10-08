@@ -19,6 +19,7 @@ namespace Game.Core
         private GridPresenter _gridPresenter;
         private MatchService _matchService;
         private PhysicsService _physicsService;
+        private CascadeService _cascadeService;
         private RefillService _refillService;
         
         private void Start()
@@ -42,15 +43,9 @@ namespace Game.Core
             _matchService = new MatchService(_gridModel, _gridConfig.MinMatchCount);
             _physicsService = new PhysicsService(_gridConfig.gravity, _gridConfig.CellSize);
             _refillService = new RefillService(_gridModel, _gridConfig);
+            _cascadeService = new CascadeService(_gridModel, _gridView, _physicsService, _gridConfig);
             _gridView.Initialize(_gridConfig.Width, _gridConfig.Height, _gridConfig.CellSize);
-            _gridPresenter = new GridPresenter(
-                _gridModel,
-                _gridView,
-                _matchService,
-                _physicsService,
-                _refillService,
-                _gridConfig
-            );
+            _gridPresenter = new GridPresenter(_gridModel, _gridView, _matchService, _cascadeService, _gridConfig);
             _gridPresenter.Initialize();
             _gridPresenter.StartGame();
         }
