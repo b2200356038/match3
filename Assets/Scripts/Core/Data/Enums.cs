@@ -1,5 +1,14 @@
 namespace Game.Core.Data
 {
+
+    public enum CellType
+    {
+        Empty,
+        Cube,
+        Obstacle,
+        PowerUp
+    }
+    
     public enum CubeType
     {
         Empty,

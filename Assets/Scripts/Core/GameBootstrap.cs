@@ -11,6 +11,7 @@ namespace Game.Core
     {
         [Header("Configuration")] 
         [SerializeField] private GridConfig _gridConfig;
+        [SerializeField] private CellPrefabs _cellPrefabs;
 
         [Header("View Reference")] 
         [SerializeField] private GridView _gridView;
@@ -21,6 +22,8 @@ namespace Game.Core
         private PhysicsService _physicsService;
         private CascadeService _cascadeService;
         private RefillService _refillService;
+        private CellPoolService _cellPoolService;
+
         
         private void Start()
         {
@@ -41,14 +44,14 @@ namespace Game.Core
 
 
             _gridModel = new GridModel(_gridConfig);
-
+            _cellPoolService = new CellPoolService(_cellPrefabs);
             _matchService = new MatchService(_gridModel, _gridConfig.MinMatchCount);
             _physicsService = new PhysicsService(_gridConfig.gravity, _gridConfig.CellSize);
             _refillService = new RefillService(_gridModel, _gridConfig);
             _cascadeService = new CascadeService(_gridModel, _gridView, _physicsService, _gridConfig);
             
 
-            _gridView.Initialize(_gridConfig.Width, _gridConfig.Height, _gridConfig.CellSize);
+            _gridView.Initialize(_gridConfig.Width, _gridConfig.Height, _gridConfig.CellSize, _cellPoolService);
             
 
             _gridPresenter = new GridPresenter(_gridModel, _gridView, _matchService, _cascadeService, _gridConfig);

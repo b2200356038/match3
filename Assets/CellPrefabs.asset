@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4da9ff647de442249b83c0503fca6bf0, type: 3}
+  m_Name: CellPrefabs
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Core.Data.CellPrefabs
+  _cubePrefabs:
+  - cubeType: 1
+    prefab: {fileID: 6997957811740263747, guid: 5aeebd58a4626204da9acf4095612929, type: 3}
+  - cubeType: 3
+    prefab: {fileID: 6997957811740263747, guid: 4d481f40eff87fb42961b27563a8e6e4, type: 3}
+  - cubeType: 2
+    prefab: {fileID: 6997957811740263747, guid: 7be3ba8a5437d7e45819ecb89d37ae5a, type: 3}
+  - cubeType: 4
+    prefab: {fileID: 6997957811740263747, guid: 8d8d0c212993acb4ca6a175cb83793c0, type: 3}
+  - cubeType: 0
+    prefab: {fileID: 0}
+  _obstaclePrefabs: []
+  _powerUpPrefabs: []

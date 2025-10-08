@@ -27,7 +27,7 @@ namespace Game.Services
             }
     
             bool[,] visited = new bool[_gridModel.Width, _gridModel.Height];
-            FindMatchesDFS(startX, startY, startSlot.CubeType.Value, matches, visited);
+            FindMatchesDFS(startX, startY, startSlot.CubeType, matches, visited);
             if (matches.Count < _minMatchCount)
             {
                 return new List<Vector2Int>();
@@ -46,7 +46,7 @@ namespace Game.Services
             
             CellData slot = _gridModel.GetSlot(x, y);
             
-            if (!slot.IsCube || slot.CubeType.Value != targetType || slot.State != CellState.Idle)
+            if (!slot.IsCube || slot.CubeType != targetType || slot.State != CellState.Idle)
                 return;
     
             visited[x, y] = true;
@@ -78,7 +78,7 @@ namespace Game.Services
 
                     List<Vector2Int> matches = new List<Vector2Int>();
                     bool[,] visited = new bool[_gridModel.Width, _gridModel.Height];
-                    FindMatchesDFS(x, y, slot.CubeType.Value, matches, visited);
+                    FindMatchesDFS(x, y, slot.CubeType, matches, visited);
                     
                     if (matches.Count >= _minMatchCount)
                     {

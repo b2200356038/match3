@@ -31,7 +31,7 @@ namespace Game.Features.Grid.Model
                 for (int y = 0; y < Height - 1; y++)
                 {
                     CubeType randomCube = GetRandomCubeType();
-                    _slots[x, y] = new CellData(randomCube, new Vector2Int(x, y));
+                    _slots[x, y] = CellData.CreateCube(randomCube, new Vector2Int(x, y));
                 }
 
                 int spawnY = Height - 1;
@@ -49,7 +49,7 @@ namespace Game.Features.Grid.Model
             }
 
             CubeType cubeType = GetRandomCubeType();
-            _slots[x, spawnY] = new CellData(cubeType, new Vector2Int(x, spawnY));
+            _slots[x, spawnY] = CellData.CreateCube(cubeType, new Vector2Int(x, spawnY));
         }
 
         public CellData GetSlot(int x, int y)

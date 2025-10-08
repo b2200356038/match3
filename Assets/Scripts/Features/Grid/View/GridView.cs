@@ -1,36 +1,38 @@
 using System;
 using DG.Tweening;
 using Game.Core.Data;
+using Game.Services;
 using UnityEngine;
 
 namespace Game.Features.Grid.View
 {
     public class GridView : MonoBehaviour
     {
-        [Header("References")] [SerializeField]
-        private GameObject _cellPrefab;
-
+        [Header("References")]
         [SerializeField] private SpriteRenderer _backgroundSprite;
         [SerializeField] private SpriteRenderer _maskSprite;
         [SerializeField] private Transform _gridContainer;
 
-        [Header("Settings")] [SerializeField] private float _cellSize = 1f;
+        [Header("Settings")]
+        [SerializeField] private float _cellSize = 1f;
+        [SerializeField] private float _zSpacing = 0.01f; // Her Y seviyesi arasındaki Z mesafesi
 
         public event Action<int, int> OnCellClicked;
 
-        private GameObject[,] _cellObjects;
+        private PoolableObject[,] _cellObjects;
+        private CellPoolService _cellPoolService;
         private int _width;
         private int _height;
         private int _totalHeight;
 
-        public void Initialize(int width, int height, float cellSize)
+        public void Initialize(int width, int height, float cellSize, CellPoolService cellPoolService)
         {
             _width = width;
             _height = height;
             _totalHeight = height + 1;
             _cellSize = cellSize;
-            _cellObjects = new GameObject[_width, _totalHeight];
-            Debug.Log($"GridView initialized: {width}x{height} (total: {_totalHeight})");
+            _cellPoolService = cellPoolService;
+            _cellObjects = new PoolableObject[_width, _totalHeight];
         }
 
         public void CreateGrid(CellData[,] slots)
@@ -41,47 +43,41 @@ namespace Game.Features.Grid.View
             {
                 for (int y = 0; y < _height; y++)
                 {
-                    CellData slot = slots[x, y];
-
-                    if (slot.IsEmpty)
-                    {
-                        continue;
-                    }
-
-                    CreateCellVisual(x, y, slot);
+                    CreateCellVisual(x, y, slots[x, y]);
                 }
             }
-
             UpdateBackgroundSize();
         }
 
-        private void UpdateBackgroundSize()
+        private void CreateCellVisual(int x, int y, CellData slot)
         {
-            if (_backgroundSprite == null)
-            {
-                return;
-            }
+            if (slot.IsEmpty) return;
 
-            float gridWidth = _width * _cellSize;
-            float gridHeight = _height * _cellSize;
-            _backgroundSprite.size = new Vector2(gridWidth + 0.2f, gridHeight + 0.2f);
-            _maskSprite.size = new Vector2(gridWidth, gridHeight);
+            PoolableObject cellObj = _cellPoolService.Get(slot);
+            if (cellObj == null) return;
+            
+            cellObj.name = $"Cell_{x}_{y}";
+            cellObj.transform.SetParent(_gridContainer);
+            cellObj.transform.position = CalculateWorldPosition(x, y);
+
+            CellInput input = cellObj.GetComponent<CellInput>();
+            if (input == null) input = cellObj.gameObject.AddComponent<CellInput>();
+            
+            input.Initialize(x, y, this);
+            _cellObjects[x, y] = cellObj;
         }
 
         public void CreateCellAtSpawnPosition(int x, int spawnY, CellData slotData)
         {
-            Vector3 spawnPos = CalculateWorldPosition(x, spawnY);
-            GameObject cellObj = Instantiate(_cellPrefab, _gridContainer);
-            cellObj.transform.position = spawnPos;
+            PoolableObject cellObj = _cellPoolService.Get(slotData);
+            if (cellObj == null) return;
+
+            cellObj.transform.SetParent(_gridContainer);
+            cellObj.transform.position = CalculateWorldPosition(x, spawnY);
             cellObj.name = $"Cell_Spawn_{x}_{spawnY}";
 
-            SetCellVisual(cellObj, slotData);
-
             CellInput input = cellObj.GetComponent<CellInput>();
-            if (input == null)
-            {
-                input = cellObj.AddComponent<CellInput>();
-            }
+            if (input == null) input = cellObj.gameObject.AddComponent<CellInput>();
 
             input.Initialize(x, spawnY, this);
             _cellObjects[x, spawnY] = cellObj;
@@ -89,23 +85,20 @@ namespace Game.Features.Grid.View
 
         public void RemoveCell(int x, int y)
         {
-            if (!IsValidPosition(x, y))
-            {
-                return;
-            }
+            if (!IsValidPosition(x, y)) return;
 
-            GameObject cellObj = _cellObjects[x, y];
+            PoolableObject cellObj = _cellObjects[x, y];
             if (cellObj != null)
             {
-                Destroy(cellObj);
+                cellObj.ReturnToPool();
                 _cellObjects[x, y] = null;
             }
         }
-
+        
         public void MoveCellAnimated(int fromX, int fromY, int toX, int toY,
             float duration, float initialVelocity, float gravity, Action onComplete)
         {
-            GameObject cellObj = _cellObjects[fromX, fromY];
+            PoolableObject cellObj = _cellObjects[fromX, fromY];
             if (cellObj == null)
             {
                 onComplete?.Invoke();
@@ -114,7 +107,7 @@ namespace Game.Features.Grid.View
 
             _cellObjects[toX, toY] = cellObj;
             _cellObjects[fromX, fromY] = null;
-
+            
             Vector3 startPos = cellObj.transform.position;
             Vector3 targetPos = CalculateWorldPosition(toX, toY);
             float distance = Vector3.Distance(startPos, targetPos);
@@ -134,7 +127,11 @@ namespace Game.Features.Grid.View
                             float currentDistance = initialVelocity * t + 0.5f * gravity * t * t;
                             float t01 = currentDistance / distance;
                             t01 = Mathf.Clamp01(t01);
-                            cellObj.transform.position = Vector3.Lerp(startPos, targetPos, t01);
+                            Vector3 currentPos = Vector3.Lerp(startPos, targetPos, t01);
+                            // Animasyon sırasında da Z pozisyonunu güncelle
+                            float currentY = Mathf.Lerp(fromY, toY, t01);
+                            currentPos.z = CalculateZPosition(currentY);
+                            cellObj.transform.position = currentPos;
                         },
                         duration,
                         duration)
@@ -150,12 +147,9 @@ namespace Game.Features.Grid.View
 
         public void UpdateCell(int x, int y, CellData slotData)
         {
-            if (!IsValidPosition(x, y))
-            {
-                return;
-            }
+            if (!IsValidPosition(x, y)) return;
 
-            GameObject cellObj = _cellObjects[x, y];
+            PoolableObject cellObj = _cellObjects[x, y];
 
             if (slotData.IsEmpty)
             {
@@ -167,57 +161,17 @@ namespace Game.Features.Grid.View
                 {
                     CreateCellVisual(x, y, slotData);
                 }
-                else
-                {
-                    SetCellVisual(cellObj, slotData);
-                }
             }
         }
-
-        private void CreateCellVisual(int x, int y, CellData slot)
+        
+        private void UpdateBackgroundSize()
         {
-            GameObject cellObj = Instantiate(_cellPrefab, _gridContainer);
-            cellObj.name = $"Cell_{x}_{y}";
+            if (_backgroundSprite == null) return;
 
-            Vector3 worldPos = CalculateWorldPosition(x, y);
-            cellObj.transform.position = worldPos;
-
-            SetCellVisual(cellObj, slot);
-
-            CellInput input = cellObj.GetComponent<CellInput>();
-            if (input == null)
-            {
-                input = cellObj.AddComponent<CellInput>();
-            }
-
-            input.Initialize(x, y, this);
-
-            _cellObjects[x, y] = cellObj;
-        }
-
-        private void SetCellVisual(GameObject cellObj, CellData slot)
-        {
-            SpriteRenderer spriteRenderer = cellObj.GetComponent<SpriteRenderer>();
-            if (spriteRenderer == null)
-            {
-                return;
-            }
-
-            Color color = Color.white;
-
-            if (slot.IsCube)
-            {
-                color = slot.CubeType.Value switch
-                {
-                    CubeType.Red => Color.red,
-                    CubeType.Green => Color.green,
-                    CubeType.Blue => Color.blue,
-                    CubeType.Yellow => Color.yellow,
-                    _ => Color.white
-                };
-            }
-
-            spriteRenderer.color = color;
+            float gridWidth = _width * _cellSize;
+            float gridHeight = _height * _cellSize;
+            _backgroundSprite.size = new Vector2(gridWidth + 0.2f, gridHeight + 0.2f);
+            _maskSprite.size = new Vector2(gridWidth, gridHeight);
         }
 
         private Vector3 CalculateWorldPosition(int x, int y)
@@ -228,11 +182,20 @@ namespace Game.Features.Grid.View
                 0
             );
 
-            return new Vector3(
+            Vector3 position = new Vector3(
                 offset.x + (x * _cellSize),
                 offset.y + (y * _cellSize),
-                0
+                CalculateZPosition(y) // Z pozisyonu Y'ye göre hesaplanıyor
             );
+
+            return position;
+        }
+
+        // Y pozisyonuna göre Z değerini hesapla
+        // Yüksek Y değerleri = daha üstte = daha küçük Z (önde render edilir)
+        private float CalculateZPosition(float y)
+        {
+            return -y * _zSpacing;
         }
 
         private bool IsValidPosition(int x, int y)
@@ -247,10 +210,7 @@ namespace Game.Features.Grid.View
 
         private void ClearGrid()
         {
-            if (_cellObjects == null)
-            {
-                return;
-            }
+            if (_cellObjects == null) return;
 
             for (int x = 0; x < _width; x++)
             {
@@ -258,7 +218,7 @@ namespace Game.Features.Grid.View
                 {
                     if (_cellObjects[x, y] != null)
                     {
-                        Destroy(_cellObjects[x, y]);
+                        _cellObjects[x, y].ReturnToPool();
                         _cellObjects[x, y] = null;
                     }
                 }
