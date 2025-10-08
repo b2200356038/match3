@@ -15,7 +15,6 @@ namespace Game.Features.Grid.View
 
         [Header("Settings")]
         [SerializeField] private float _cellSize = 1f;
-        [SerializeField] private float _zSpacing = 0.01f; // Her Y seviyesi arasındaki Z mesafesi
 
         public event Action<int, int> OnCellClicked;
 
@@ -82,7 +81,6 @@ namespace Game.Features.Grid.View
             input.Initialize(x, spawnY, this);
             _cellObjects[x, spawnY] = cellObj;
         }
-
         public void RemoveCell(int x, int y)
         {
             if (!IsValidPosition(x, y)) return;
@@ -94,7 +92,6 @@ namespace Game.Features.Grid.View
                 _cellObjects[x, y] = null;
             }
         }
-        
         public void MoveCellAnimated(int fromX, int fromY, int toX, int toY,
             float duration, float initialVelocity, float gravity, Action onComplete)
         {
@@ -104,12 +101,13 @@ namespace Game.Features.Grid.View
                 onComplete?.Invoke();
                 return;
             }
-
             _cellObjects[toX, toY] = cellObj;
             _cellObjects[fromX, fromY] = null;
-            
             Vector3 startPos = cellObj.transform.position;
             Vector3 targetPos = CalculateWorldPosition(toX, toY);
+            startPos.z = targetPos.z;
+            cellObj.transform.position = startPos;
+    
             float distance = Vector3.Distance(startPos, targetPos);
 
             cellObj.name = $"Cell_{toX}_{toY}";
@@ -119,7 +117,7 @@ namespace Game.Features.Grid.View
             {
                 input.Initialize(toX, toY, this);
             }
-
+    
             Sequence sequence = DOTween.Sequence();
             sequence.Append(
                 DOTween.To(() => 0f, t =>
@@ -128,9 +126,6 @@ namespace Game.Features.Grid.View
                             float t01 = currentDistance / distance;
                             t01 = Mathf.Clamp01(t01);
                             Vector3 currentPos = Vector3.Lerp(startPos, targetPos, t01);
-                            // Animasyon sırasında da Z pozisyonunu güncelle
-                            float currentY = Mathf.Lerp(fromY, toY, t01);
-                            currentPos.z = CalculateZPosition(currentY);
                             cellObj.transform.position = currentPos;
                         },
                         duration,
@@ -140,30 +135,9 @@ namespace Game.Features.Grid.View
 
             sequence.OnComplete(() =>
             {
-                cellObj.transform.position = targetPos;
                 onComplete?.Invoke();
             });
         }
-
-        public void UpdateCell(int x, int y, CellData slotData)
-        {
-            if (!IsValidPosition(x, y)) return;
-
-            PoolableObject cellObj = _cellObjects[x, y];
-
-            if (slotData.IsEmpty)
-            {
-                RemoveCell(x, y);
-            }
-            else
-            {
-                if (cellObj == null)
-                {
-                    CreateCellVisual(x, y, slotData);
-                }
-            }
-        }
-        
         private void UpdateBackgroundSize()
         {
             if (_backgroundSprite == null) return;
@@ -185,17 +159,9 @@ namespace Game.Features.Grid.View
             Vector3 position = new Vector3(
                 offset.x + (x * _cellSize),
                 offset.y + (y * _cellSize),
-                CalculateZPosition(y) // Z pozisyonu Y'ye göre hesaplanıyor
+                -y
             );
-
             return position;
-        }
-
-        // Y pozisyonuna göre Z değerini hesapla
-        // Yüksek Y değerleri = daha üstte = daha küçük Z (önde render edilir)
-        private float CalculateZPosition(float y)
-        {
-            return -y * _zSpacing;
         }
 
         private bool IsValidPosition(int x, int y)
@@ -207,7 +173,6 @@ namespace Game.Features.Grid.View
         {
             OnCellClicked?.Invoke(x, y);
         }
-
         private void ClearGrid()
         {
             if (_cellObjects == null) return;
@@ -224,7 +189,6 @@ namespace Game.Features.Grid.View
                 }
             }
         }
-
         private void OnDestroy()
         {
             ClearGrid();

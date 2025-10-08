@@ -15,7 +15,7 @@ namespace Game.Services
             _cellPrefabs = cellPrefabs;
             _cellPrefabs.Initialize();
             _poolParent = new GameObject("CellPool").transform;
-            _pool = new Dictionary<GameObject, Queue<PoolableObject>>(); // ← DÜZELTME: Dictionary'yi initialize et
+            _pool = new Dictionary<GameObject, Queue<PoolableObject>>();
         }
 
         public PoolableObject Get(CellData cellData)
@@ -52,7 +52,6 @@ namespace Game.Services
             
             return poolable;
         }
-
         private void Return(GameObject prefab, PoolableObject obj)
         {
             obj.gameObject.SetActive(false);
