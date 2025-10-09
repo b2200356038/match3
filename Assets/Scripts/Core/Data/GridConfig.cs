@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Game.Core.Data
 {
-    [CreateAssetMenu(fileName = "GridConfig", menuName = "Game/Config")]
+    [CreateAssetMenu(fileName = "GridConfig", menuName = "Game/GridConfig")]
     public class GridConfig : ScriptableObject
     {
         [Header("Grid Dimensions")]

@@ -79,6 +79,13 @@ namespace Game.Core.Data
             newData.Health = Mathf.Max(0, Health - damage);
             return newData;
         }
+        
+        public CellData ToggleCanFall()
+        {
+            var newData = this;
+            newData.CanFall = !CanFall;
+            return newData;
+        }
         public CellData WithState(CellState newState)
         {
             var newData = this;

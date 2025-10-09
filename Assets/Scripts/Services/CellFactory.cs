@@ -52,19 +52,16 @@ namespace Game.Services
             );
         }
 
-        public CellData CreateRandomCube(Vector2Int position, int colorCount)
+        public CellData CreateRandomCube(Vector2Int position)
         {
-            int random = Random.Range(0, colorCount);
-            CubeType cubeType = random switch
-            {
-                0 => CubeType.Red,
-                1 => CubeType.Blue,
-                2 => CubeType.Green,
-                3 => CubeType.Yellow,
-                _ => CubeType.Red
-            };
+            var allCubes = _cellConfig.GetAllCubeTypes();
+            if (allCubes == null || allCubes.Count == 0)
+                return CellData.CreateEmpty(position);
 
-            return CreateCube(cubeType, position);
+            var randomIndex = Random.Range(0, allCubes.Count);
+            var randomCubeType = allCubes[randomIndex];
+
+            return CreateCube(randomCubeType, position);
         }
 
         public CellData CreateEmpty(Vector2Int position)

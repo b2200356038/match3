@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using DG.Tweening;
 using Game.Core.Data;
 using Game.Services;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace Game.Features.Grid.View
 {
@@ -34,7 +36,7 @@ namespace Game.Features.Grid.View
             _cellObjects = new PoolableObject[_width, _totalHeight];
         }
 
-        public void CreateGrid(CellData[,] slots)
+        public void CreateGrid(CellData[,] cells)
         {
             ClearGrid();
 
@@ -42,44 +44,48 @@ namespace Game.Features.Grid.View
             {
                 for (int y = 0; y < _height; y++)
                 {
-                    CreateCellVisual(x, y, slots[x, y]);
+                    CreateCell(x, y, cells[x, y]);
                 }
             }
             UpdateBackgroundSize();
         }
 
-        private void CreateCellVisual(int x, int y, CellData slot)
+        public void CreateCell(int x, int y, CellData cellData)
         {
-            if (slot.IsEmpty) return;
-
-            PoolableObject cellObj = _cellPoolService.Get(slot);
+            if (cellData.IsEmpty) return;
+            PoolableObject cellObj = _cellPoolService.Get(cellData);
             if (cellObj == null) return;
-            
             cellObj.name = $"Cell_{x}_{y}";
             cellObj.transform.SetParent(_gridContainer);
             cellObj.transform.position = CalculateWorldPosition(x, y);
-
             CellInput input = cellObj.GetComponent<CellInput>();
             if (input == null) input = cellObj.gameObject.AddComponent<CellInput>();
-            
             input.Initialize(x, y, this);
             _cellObjects[x, y] = cellObj;
         }
-
-        public void CreateCellAtSpawnPosition(int x, int spawnY, CellData slotData)
+        public void CreatePowerUp(List<Vector2Int> matches, CellData powerUpData, Action onComplete)
         {
-            PoolableObject cellObj = _cellPoolService.Get(slotData);
-            if (cellObj == null) return;
-
-            cellObj.transform.SetParent(_gridContainer);
-            cellObj.transform.position = CalculateWorldPosition(x, spawnY);
-            cellObj.name = $"Cell_Spawn_{x}_{spawnY}";
-
-            CellInput input = cellObj.GetComponent<CellInput>();
-            if (input == null) input = cellObj.gameObject.AddComponent<CellInput>();
-
-            input.Initialize(x, spawnY, this);
-            _cellObjects[x, spawnY] = cellObj;
+            if (matches == null || matches.Count == 0) return;
+            PoolableObject clickedCell = _cellObjects[matches[0].x, matches[0].y];
+            Vector3 targetPos = clickedCell.transform.position;
+            Sequence sequence = DOTween.Sequence();
+            foreach (var pos in matches)
+            {
+                PoolableObject cellObj = _cellObjects[pos.x, pos.y];
+                cellObj.GetComponent<CellInput>().enabled = false;
+                if (cellObj == null) continue;
+                _cellObjects[pos.x, pos.y] = null;
+                var tween = cellObj.transform
+                    .DOMove(targetPos, 0.2f)
+                    .SetEase(Ease.InSine)
+                    .OnComplete(() => cellObj.ReturnToPool());
+                sequence.Join(tween); 
+            }
+            sequence.OnComplete(() =>
+            {
+                CreateCell(matches[0].x, matches[0].y, powerUpData);
+                onComplete?.Invoke();
+            });
         }
         public void RemoveCell(int x, int y)
         {
@@ -135,33 +141,6 @@ namespace Game.Features.Grid.View
                 onComplete?.Invoke();
             });
         }
-
-        public void BounceCellAtPosition(int x, int y, float fallVelocity)
-        {
-            if (!IsValidPosition(x, y))
-            {
-                return;
-            }
-
-            PoolableObject cellObj = _cellObjects[x, y];
-            if (cellObj == null)
-            {
-                return;
-            }
-            Vector3 originalPos = cellObj.transform.position;
-            float bounceHeight = Mathf.Clamp(fallVelocity * 0.01f, 0.01f, 0.1f);
-            float bounceDuration = Mathf.Clamp(fallVelocity * 0.02f, 0.01f, 0.18f);
-            Sequence sequence = DOTween.Sequence();
-            sequence.Append(
-                cellObj.transform.DOMoveY(originalPos.y + bounceHeight, bounceDuration * 0.4f)
-                    .SetEase(Ease.OutCubic)
-            );
-            sequence.Append(
-                cellObj.transform.DOMoveY(originalPos.y, bounceDuration * 0.6f)
-                    .SetEase(Ease.OutBounce) 
-            );
-        }
-
         private void UpdateBackgroundSize()
         {
             if (_backgroundSprite == null) return;

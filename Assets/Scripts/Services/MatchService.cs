@@ -18,7 +18,7 @@ namespace Game.Services
 
         public List<Vector2Int> FindMatches(int startX, int startY)
         {
-            CellData startSlot = _gridModel.GetSlot(startX, startY);
+            CellData startSlot = _gridModel.GetCell(startX, startY);
             List<Vector2Int> matches = new List<Vector2Int>();
             
             if (!startSlot.IsCube || !startSlot.CanClick)
@@ -44,7 +44,7 @@ namespace Game.Services
             if (visited[x, y])
                 return;
             
-            CellData slot = _gridModel.GetSlot(x, y);
+            CellData slot = _gridModel.GetCell(x, y);
             
             if (!slot.IsCube || slot.CubeType != targetType || slot.State != CellState.Idle)
                 return;
@@ -71,7 +71,7 @@ namespace Game.Services
                     if (globalVisited[x, y])
                         continue;
 
-                    CellData slot = _gridModel.GetSlot(x, y);
+                    CellData slot = _gridModel.GetCell(x, y);
                     
                     if (!slot.IsCube || !slot.CanClick)
                         continue;

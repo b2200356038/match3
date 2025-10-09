@@ -25,12 +25,8 @@ namespace Game.Services
             GameObject prefab = _cellConfig.GetPrefab(cellData);
             if (prefab == null)
             {
-                Debug.LogError($"Prefab for {cellData.CellType} not found!");
                 return null;
             }
-            
-            Debug.Log(cellData.CellType);
-
             if (_pool.TryGetValue(prefab, out var queue) && queue.Count > 0)
             {
                 PoolableObject obj = queue.Dequeue();

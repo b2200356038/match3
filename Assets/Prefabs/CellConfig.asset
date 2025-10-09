@@ -32,8 +32,8 @@ MonoBehaviour:
   _obstaclePrefabs:
   - obstacleType: 0
     prefab: {fileID: 6997957811740263747, guid: e314fa79ad57e3943bbd7231d60542dc, type: 3}
-    health: 1
-    canFall: 0
+    health: 2
+    canFall: 1
   - obstacleType: 1
     prefab: {fileID: 6997957811740263747, guid: e314fa79ad57e3943bbd7231d60542dc, type: 3}
     health: 1
@@ -42,4 +42,16 @@ MonoBehaviour:
     prefab: {fileID: 6997957811740263747, guid: e314fa79ad57e3943bbd7231d60542dc, type: 3}
     health: 1
     canFall: 0
-  _powerUpPrefabs: []
+  _powerUpPrefabs:
+  - powerUpType: 2
+    prefab: {fileID: 6997957811740263747, guid: 27dc08367b73c324d87d4e34e8da4b79, type: 3}
+    health: 0
+    canFall: 0
+  - powerUpType: 0
+    prefab: {fileID: 6997957811740263747, guid: 27dc08367b73c324d87d4e34e8da4b79, type: 3}
+    health: 0
+    canFall: 0
+  - powerUpType: 1
+    prefab: {fileID: 6997957811740263747, guid: 27dc08367b73c324d87d4e34e8da4b79, type: 3}
+    health: 0
+    canFall: 0

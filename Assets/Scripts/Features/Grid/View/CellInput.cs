@@ -14,6 +14,7 @@ namespace Game.Features.Grid.View
             _x = x;
             _y = y;
             _gridView = gridView;
+            enabled = true;
         }
 
         public void OnPointerDown(PointerEventData eventData)

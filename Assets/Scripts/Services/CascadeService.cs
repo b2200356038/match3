@@ -22,11 +22,19 @@ namespace Game.Services
             _gridConfig = gridConfig;
         }
 
-        public void ProcessCascades(List<Vector2Int> matches)
+        public void ProcessCascades()
         {
-            foreach (var match in matches)
+            for (int x = 0; x < _gridModel.Width; x++)
             {
-                CheckAbove(match.x, match.y, 0);
+                for (int y = 0; y < _gridModel.Height; y++)
+                {
+                    CellData cell = _gridModel.GetCell(x, y);
+
+                    if (cell.IsEmpty)
+                    {
+                        CheckAbove(x, y, 0);
+                    }
+                }
             }
         }
 
@@ -43,7 +51,7 @@ namespace Game.Services
             {
                 if (aboveY == _gridModel.VisibleHeight)
                 {
-                    CellData spawnSlot = _gridModel.GetSlot(x, aboveY);
+                    CellData spawnSlot = _gridModel.GetCell(x, aboveY);
                     if (spawnSlot.IsEmpty)
                     {
                         SpawnNewCellAtTop(x);
@@ -51,7 +59,7 @@ namespace Game.Services
                     }
                 }
                 
-                CellData aboveSlot = _gridModel.GetSlot(x, aboveY);
+                CellData aboveSlot = _gridModel.GetCell(x, aboveY);
                 if (aboveSlot.IsFallable && aboveSlot.State != CellState.Moving)
                 {
                     StartFalling(x, aboveY);
@@ -61,14 +69,14 @@ namespace Game.Services
 
         private void StartFalling(int x, int y)
         {
-            _gridModel.SetSlotState(x, y, CellState.Moving);
+            _gridModel.SetCellState(x, y, CellState.Moving);
             FallOneStep(x, y, 0);
         }
 
         private void FallOneStep(int x, int y, float initialVelocity)
         {
             CheckAbove(x, y, initialVelocity);
-            CellData slot = _gridModel.GetSlot(x, y);
+            CellData slot = _gridModel.GetCell(x, y);
             
             if (slot.IsEmpty)
             {
@@ -79,19 +87,19 @@ namespace Game.Services
             
             if (targetY < 0)
             {
-                _gridModel.SetSlotState(x, y, CellState.Idle);
+                _gridModel.SetCellState(x, y, CellState.Idle);
                 return;
             }
             
-            CellData targetSlot = _gridModel.GetSlot(x, targetY);
+            CellData targetSlot = _gridModel.GetCell(x, targetY);
             if (!targetSlot.IsEmpty)
             {
-                _gridModel.SetSlotState(x, y, CellState.Idle);
+                _gridModel.SetCellState(x, y, CellState.Idle);
                 return;
             }
             
-            _gridModel.SetSlot(x, targetY, slot.WithState(CellState.Moving));
-            _gridModel.ClearSlot(x, y);
+            _gridModel.SetCell(x, targetY, slot.WithState(CellState.Moving));
+            _gridModel.ClearCell(x, y);
             
             float fallDuration = _physicsService.CalculateFallDuration(initialVelocity);
             float newVelocity = initialVelocity + _gridConfig.gravity * fallDuration;
@@ -108,23 +116,22 @@ namespace Game.Services
 
         private void OnCellFallComplete(int x, int y, float initialVelocity)
         {
-            if (y > 0 && _gridModel.GetSlot(x, y - 1).IsEmpty)
+            if (y > 0 && _gridModel.GetCell(x, y - 1).IsEmpty)
             {
                 FallOneStep(x, y, initialVelocity); 
             }
             else
             {
-                _gridModel.SetSlotState(x, y, CellState.Idle);
-                //_gridView.BounceCellAtPosition(x,y, initialVelocity);
+                _gridModel.SetCellState(x, y, CellState.Idle);
             }
         }
 
         private void SpawnNewCellAtTop(int x)
         {
-            _gridModel.SpawnCellAtTop(x);
+            _gridModel.RefillCellAtTop(x);
             int spawnY = _gridModel.Height - 1;
-            CellData spawnedSlot = _gridModel.GetSlot(x, spawnY);
-            _gridView.CreateCellAtSpawnPosition(x, spawnY, spawnedSlot);
+            CellData spawnedSlot = _gridModel.GetCell(x, spawnY);
+            _gridView.CreateCell(x, spawnY, spawnedSlot);
         }
     }
 }

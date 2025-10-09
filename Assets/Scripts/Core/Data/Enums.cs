@@ -36,6 +36,7 @@ namespace Game.Core.Data
     {
         Idle,
         Moving,
+        Matched,
         Disabled
     }
 

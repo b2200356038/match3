@@ -14,19 +14,5 @@ namespace Game.Services
             _gridModel = gridModel;
             _gridConfig = gridConfig;
         }
-
-        public CubeType GetRandomCellType()
-        {
-            int random = Random.Range(0, _gridConfig.ColorCount);
-            
-            return random switch
-            {
-                0 => CubeType.Red,
-                1 => CubeType.Blue,
-                2 => CubeType.Green,
-                3 => CubeType.Yellow,
-                _ => CubeType.Red
-            };
-        }
     }
 }

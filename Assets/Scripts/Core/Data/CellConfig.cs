@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Game.Core.Data
 {
-    [CreateAssetMenu(fileName = "CellConfig", menuName = "Game/Config")]
+    [CreateAssetMenu(fileName = "CellConfig", menuName = "Game/CellConfig")]
     public class CellConfig : ScriptableObject
     {
         [System.Serializable]
@@ -90,6 +90,17 @@ namespace Game.Core.Data
         public PowerUpPrefabMapping GetPowerUpMapping(PowerUpType type)
         {
             return _powerUpDict.GetValueOrDefault(type);
+        }
+        
+        public List<CubeType> GetAllCubeTypes()
+        {
+            List<CubeType> types = new List<CubeType>();
+            foreach (var mapping in _cubePrefabs)
+            {
+                if (mapping.prefab != null)
+                    types.Add(mapping.cubeType);
+            }
+            return types;
         }
     }
 }
