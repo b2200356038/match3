@@ -16,8 +16,10 @@ MonoBehaviour:
   height: 6
   cellSize: 1
   colorCount: 4
+  obstacleCount: 5
+  cubeCount: 10
   minMatchCount: 1
   startingMoves: 20
   targetMatches: 10
-  gravity: 30
-  cascadeDelay: 0.025
+  gravity: 45
+  cascadeDelay: 0.05

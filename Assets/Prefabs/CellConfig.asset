@@ -10,18 +10,36 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4da9ff647de442249b83c0503fca6bf0, type: 3}
-  m_Name: CellPrefabs
+  m_Name: CellConfig
   m_EditorClassIdentifier: Assembly-CSharp::Game.Core.Data.CellPrefabs
   _cubePrefabs:
-  - cubeType: 1
-    prefab: {fileID: 6997957811740263747, guid: 5aeebd58a4626204da9acf4095612929, type: 3}
-  - cubeType: 3
-    prefab: {fileID: 6997957811740263747, guid: 4d481f40eff87fb42961b27563a8e6e4, type: 3}
-  - cubeType: 2
-    prefab: {fileID: 6997957811740263747, guid: 7be3ba8a5437d7e45819ecb89d37ae5a, type: 3}
-  - cubeType: 4
-    prefab: {fileID: 6997957811740263747, guid: 8d8d0c212993acb4ca6a175cb83793c0, type: 3}
   - cubeType: 0
-    prefab: {fileID: 0}
-  _obstaclePrefabs: []
+    prefab: {fileID: 6997957811740263747, guid: 5aeebd58a4626204da9acf4095612929, type: 3}
+    health: 1
+    canFall: 1
+  - cubeType: 2
+    prefab: {fileID: 6997957811740263747, guid: 4d481f40eff87fb42961b27563a8e6e4, type: 3}
+    health: 1
+    canFall: 1
+  - cubeType: 1
+    prefab: {fileID: 6997957811740263747, guid: 7be3ba8a5437d7e45819ecb89d37ae5a, type: 3}
+    health: 1
+    canFall: 1
+  - cubeType: 3
+    prefab: {fileID: 6997957811740263747, guid: 8d8d0c212993acb4ca6a175cb83793c0, type: 3}
+    health: 1
+    canFall: 1
+  _obstaclePrefabs:
+  - obstacleType: 0
+    prefab: {fileID: 6997957811740263747, guid: e314fa79ad57e3943bbd7231d60542dc, type: 3}
+    health: 1
+    canFall: 0
+  - obstacleType: 1
+    prefab: {fileID: 6997957811740263747, guid: e314fa79ad57e3943bbd7231d60542dc, type: 3}
+    health: 1
+    canFall: 0
+  - obstacleType: 2
+    prefab: {fileID: 6997957811740263747, guid: e314fa79ad57e3943bbd7231d60542dc, type: 3}
+    health: 1
+    canFall: 0
   _powerUpPrefabs: []

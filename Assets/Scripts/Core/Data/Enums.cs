@@ -11,7 +11,6 @@ namespace Game.Core.Data
     
     public enum CubeType
     {
-        Empty,
         Red,
         Green,
         Blue,

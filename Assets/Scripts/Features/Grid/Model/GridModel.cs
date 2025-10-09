@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Game.Core.Data;
+using Game.Services;
 using UnityEngine;
 
 namespace Game.Features.Grid.Model
@@ -8,6 +9,7 @@ namespace Game.Features.Grid.Model
     {
         private CellData[,] _slots;
         private GridConfig _gridConfig;
+        private CellFactory _cellFactory;
         private int _spawnRows = 1;
 
         public int VisibleHeight { get; private set; }
@@ -15,9 +17,10 @@ namespace Game.Features.Grid.Model
         public int Height { get; private set; }
         public CellData[,] Slots => _slots;
 
-        public GridModel(GridConfig gridConfig)
+        public GridModel(GridConfig gridConfig, CellFactory cellFactory)
         {
             _gridConfig = gridConfig;
+            _cellFactory = cellFactory;
             Width = gridConfig.Width;
             VisibleHeight = gridConfig.Height;
             Height = VisibleHeight + _spawnRows;
@@ -31,7 +34,7 @@ namespace Game.Features.Grid.Model
                 for (int y = 0; y < Height - 1; y++)
                 {
                     CubeType randomCube = GetRandomCubeType();
-                    _slots[x, y] = CellData.CreateCube(randomCube, new Vector2Int(x, y));
+                    _slots[x, y] = _cellFactory.CreateCube(randomCube, new Vector2Int(x, y));
                 }
 
                 int spawnY = Height - 1;
@@ -47,7 +50,6 @@ namespace Game.Features.Grid.Model
             {
                 return;
             }
-
             CubeType cubeType = GetRandomCubeType();
             _slots[x, spawnY] = CellData.CreateCube(cubeType, new Vector2Int(x, spawnY));
         }

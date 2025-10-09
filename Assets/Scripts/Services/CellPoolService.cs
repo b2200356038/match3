@@ -6,14 +6,14 @@ namespace Game.Services
 {
     public class CellPoolService
     {
-        private readonly CellPrefabs _cellPrefabs;
+        private readonly CellConfig _cellConfig;
         private readonly Dictionary<GameObject, Queue<PoolableObject>> _pool;
         private readonly Transform _poolParent; 
 
-        public CellPoolService(CellPrefabs cellPrefabs)
+        public CellPoolService(CellConfig cellConfig)
         {
-            _cellPrefabs = cellPrefabs;
-            _cellPrefabs.Initialize();
+            _cellConfig = cellConfig;
+            _cellConfig.Initialize();
             _poolParent = new GameObject("CellPool").transform;
             _pool = new Dictionary<GameObject, Queue<PoolableObject>>();
         }
@@ -22,7 +22,7 @@ namespace Game.Services
         {
             if (cellData.IsEmpty) return null;
 
-            GameObject prefab = _cellPrefabs.GetPrefab(cellData);
+            GameObject prefab = _cellConfig.GetPrefab(cellData);
             if (prefab == null)
             {
                 Debug.LogError($"Prefab for {cellData.CellType} not found!");

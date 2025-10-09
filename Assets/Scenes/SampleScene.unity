@@ -806,7 +806,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Core.GameBootstrap
   _gridConfig: {fileID: 11400000, guid: 570337a6496a59d4c9f590925521edce, type: 2}
-  _cellPrefabs: {fileID: 11400000, guid: e07ca97f01793dc40a03b757c2225857, type: 2}
+  _cellConfig: {fileID: 11400000, guid: e07ca97f01793dc40a03b757c2225857, type: 2}
   _gridView: {fileID: 1957139951}
 --- !u!4 &1952218027
 Transform:

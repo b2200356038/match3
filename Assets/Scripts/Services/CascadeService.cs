@@ -115,7 +115,7 @@ namespace Game.Services
             else
             {
                 _gridModel.SetSlotState(x, y, CellState.Idle);
-                _gridView.BounceCellAtPosition(x,y, initialVelocity);
+                //_gridView.BounceCellAtPosition(x,y, initialVelocity);
             }
         }
 
