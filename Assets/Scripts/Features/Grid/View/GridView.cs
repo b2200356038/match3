@@ -103,15 +103,12 @@ namespace Game.Features.Grid.View
             }
             _cellObjects[toX, toY] = cellObj;
             _cellObjects[fromX, fromY] = null;
-            Vector3 startPos = cellObj.transform.position;
+            Vector3 startPos = CalculateWorldPosition(fromX, fromY);
             Vector3 targetPos = CalculateWorldPosition(toX, toY);
             startPos.z = targetPos.z;
             cellObj.transform.position = startPos;
-    
             float distance = Vector3.Distance(startPos, targetPos);
-
             cellObj.name = $"Cell_{toX}_{toY}";
-
             CellInput input = cellObj.GetComponent<CellInput>();
             if (input != null)
             {
@@ -138,6 +135,33 @@ namespace Game.Features.Grid.View
                 onComplete?.Invoke();
             });
         }
+
+        public void BounceCellAtPosition(int x, int y, float fallVelocity)
+        {
+            if (!IsValidPosition(x, y))
+            {
+                return;
+            }
+
+            PoolableObject cellObj = _cellObjects[x, y];
+            if (cellObj == null)
+            {
+                return;
+            }
+            Vector3 originalPos = cellObj.transform.position;
+            float bounceHeight = Mathf.Clamp(fallVelocity * 0.01f, 0.01f, 0.1f);
+            float bounceDuration = Mathf.Clamp(fallVelocity * 0.02f, 0.01f, 0.18f);
+            Sequence sequence = DOTween.Sequence();
+            sequence.Append(
+                cellObj.transform.DOMoveY(originalPos.y + bounceHeight, bounceDuration * 0.4f)
+                    .SetEase(Ease.OutCubic)
+            );
+            sequence.Append(
+                cellObj.transform.DOMoveY(originalPos.y, bounceDuration * 0.6f)
+                    .SetEase(Ease.OutBounce) 
+            );
+        }
+
         private void UpdateBackgroundSize()
         {
             if (_backgroundSprite == null) return;

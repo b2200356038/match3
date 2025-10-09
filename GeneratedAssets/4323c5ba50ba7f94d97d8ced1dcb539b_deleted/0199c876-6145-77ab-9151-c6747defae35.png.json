@@ -1,0 +1,29 @@
+{
+    "asset": "4323c5ba50ba7f94d97d8ced1dcb539b",
+    "fileName": "0199c876-6145-77ab-9151-c6747defae35.png",
+    "prompt": "create red vase png royal match style match 3 game block\n",
+    "negativePrompt": "",
+    "model": "94c4260f-b988-40e7-b3d3-435b9f449bd0",
+    "modelName": "Flux.1 Dev",
+    "customSeed": -1,
+    "w3CTraceId": "9ed76a6f169078d0fb485cc3308e51dd",
+    "refinementMode": "Generation",
+    "pixelateTargetSize": 0,
+    "pixelateKeepImageSize": false,
+    "pixelatePixelBlockSize": 0,
+    "pixelateMode": 0,
+    "pixelateOutlineThickness": 0,
+    "doodles": {
+        "m_Items": [
+            {
+                "doodleReferenceType": 7,
+                "doodle": [],
+                "label": "Image",
+                "strength": 0.6399999856948853,
+                "invertStrength": false,
+                "assetReferenceGuid": "6bc9dbb312ea9eb4cb89ddb4c22ee05a"
+            }
+        ]
+    },
+    "upscaleFactor": 0
+}
