@@ -16,7 +16,7 @@ namespace Game.Services
         }
         public bool TryGetPowerUp(List<Vector2Int> matches, out PowerUpType powerUpType)
         {
-            if (matches.Count < 4)
+            if (matches.Count <4)
             {
                 powerUpType = default;
                 return false;

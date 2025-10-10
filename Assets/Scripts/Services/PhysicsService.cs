@@ -1,3 +1,4 @@
+using Game.Core.Data;
 using UnityEngine;
 
 namespace Game.Services
@@ -6,23 +7,29 @@ namespace Game.Services
     {
         private readonly float _gravity;
         private readonly float _cellSize;
+        private readonly float _maxVelocity;
 
-        public PhysicsService(float gravity = 20f, float cellSize = 1f)
+        public PhysicsService(GridConfig gridConfig)
         {
-            _gravity = gravity;
-            _cellSize = cellSize;
+            _gravity = gridConfig.gravity;
+            _cellSize = gridConfig.CellSize;
+            _maxVelocity = gridConfig.maxSpeed;
         }
 
         public float CalculateFallDuration(float initialVelocity)
         {
             float distance = _cellSize;
             float duration = SolveTimeForDistance(distance, initialVelocity);
-  
             return duration;
         }
 
         public float CalculateVelocity(float initialVelocity, float stepDuration)
         {
+            Debug.Log(initialVelocity);
+            if (_maxVelocity<initialVelocity)
+            {
+                return _maxVelocity;
+            }
             return initialVelocity + stepDuration * _gravity;
         }
 

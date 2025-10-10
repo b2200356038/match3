@@ -4,7 +4,6 @@ using DG.Tweening;
 using Game.Core.Data;
 using Game.Services;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 namespace Game.Features.Grid.View
 {
@@ -74,7 +73,7 @@ namespace Game.Features.Grid.View
                 if (cellObj == null) continue;
                 _cellObjects[pos.x, pos.y] = null;
                 var tween = cellObj.transform
-                    .DOMove(targetPos, 0.2f)
+                    .DOMove(targetPos, 0.15f)
                     .SetEase(Ease.InSine)
                     .OnComplete(() => cellObj.ReturnToPool());
                 sequence.Join(tween); 
@@ -131,7 +130,6 @@ namespace Game.Features.Grid.View
                         duration)
                     .SetEase(Ease.Linear)
             );
-
             sequence.OnComplete(() =>
             {
                 onComplete?.Invoke();

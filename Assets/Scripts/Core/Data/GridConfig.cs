@@ -27,6 +27,7 @@ namespace Game.Core.Data
         [Header("Animation")]
         [SerializeField] public float gravity = 20f;
         [SerializeField] public float cascadeDelay = 0.02f;
+        [SerializeField] public float maxSpeed=15f;
 
         public int Width => width;
         public int Height => height;
@@ -37,18 +38,5 @@ namespace Game.Core.Data
         public int MinMatchCount => minMatchCount;
         public int StartingMoves => startingMoves;
         public int TargetMatches => targetMatches;
-
-        private void OnValidate()
-        {
-            width = Mathf.Clamp(width, 4, 16);
-            height = Mathf.Clamp(height, 4, 16);
-            cellSize = Mathf.Clamp(cellSize, 0.5f, 2f);
-            colorCount = Mathf.Clamp(colorCount, 2, 4);
-            minMatchCount = Mathf.Clamp(minMatchCount, 1, 5);
-            startingMoves = Mathf.Max(1, startingMoves);
-            targetMatches = Mathf.Max(1, targetMatches);
-            obstacleCount = Mathf.Clamp(obstacleCount, 0, width * height / 4);
-            cubeCount = Mathf.Clamp(cubeCount, 0, width * height / 2);
-        }
     }
 }

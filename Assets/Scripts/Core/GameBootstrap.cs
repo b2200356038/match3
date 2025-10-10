@@ -43,10 +43,10 @@ namespace Game.Core
             _gridModel = new GridModel(_gridConfig, _cellFactory);
             _cellPoolService = new CellPoolService(_cellConfig);
             _matchService = new MatchService(_gridModel, _gridConfig.MinMatchCount);
-            _physicsService = new PhysicsService(_gridConfig.gravity, _gridConfig.CellSize);
+            _physicsService = new PhysicsService(_gridConfig);
             _refillService = new RefillService(_gridModel, _gridConfig);
             _obstacleService = new ObstacleService(_gridModel);
-            _cascadeService = new CascadeService(_gridModel);
+            _cascadeService = new CascadeService(_gridModel,_physicsService,_gridConfig);
             _powerUpService = new PowerUpService(_gridModel,_cellConfig);
             _gridView.Initialize(_gridConfig.Width, _gridConfig.Height, _gridConfig.CellSize, _cellPoolService);
             
