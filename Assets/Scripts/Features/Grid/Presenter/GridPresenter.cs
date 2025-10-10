@@ -4,7 +4,6 @@ using Game.Features.Grid.Model;
 using Game.Features.Grid.View;
 using Game.Services;
 using UnityEngine;
-
 namespace Game.Features.Grid.Presenter
 {
     public class GridPresenter
@@ -13,99 +12,100 @@ namespace Game.Features.Grid.Presenter
         private readonly GridView _gridView;
         private readonly MatchService _matchService;
         private readonly CascadeService _cascadeService;
-        private readonly DamageService _damageService;
+        private readonly ObstacleService _obstacleService;
         private readonly PowerUpService _powerUpService;
+        private readonly PhysicsService _physicsService;
         private readonly GridConfig _gridConfig;
-
         public GridPresenter(GridModel gridModel, GridView gridView, MatchService matchService,
-            CascadeService cascadeService, DamageService damageService, PowerUpService powerUpService,
-            GridConfig gridConfig)
+            CascadeService cascadeService, ObstacleService obstacleService, PowerUpService powerUpService,
+            PhysicsService physicsService, GridConfig gridConfig)
         {
             _gridModel = gridModel;
             _gridView = gridView;
             _matchService = matchService;
             _cascadeService = cascadeService;
-            _damageService = damageService;
+            _obstacleService = obstacleService;
             _powerUpService = powerUpService;
+            _physicsService = physicsService;
             _gridConfig = gridConfig;
         }
-
         public void Initialize()
         {
             _gridView.OnCellClicked += HandleCellClick;
         }
-
         public void Dispose()
         {
             _gridView.OnCellClicked -= HandleCellClick;
         }
-
         public void StartGame()
         {
             _gridModel.InitializeGrid();
             _gridView.CreateGrid(_gridModel.Cells);
         }
-
         private void HandleCellClick(int x, int y)
         {
             if (!_gridModel.IsCellClickable(x, y))
-            {
                 return;
-            }
-
-            CellData clickedSlot = _gridModel.GetCell(x, y);
-
-            if (clickedSlot.IsPowerUp)
-            {
+            CellData clickedCell = _gridModel.GetCell(x, y);
+            if (clickedCell.IsPowerUp)
+                return; // TODO: Handle PowerUp activation
+            if (!clickedCell.IsCube)
                 return;
-            }
-
-            if (clickedSlot.IsCube)
-            {
-                var matches = _matchService.FindMatches(x, y);
-
-                if (matches.Count < _gridConfig.MinMatchCount)
-                {
-                    return;
-                }
-
-                ProcessMatches(matches);
-            }
+            var matches = _matchService.FindMatches(x, y);
+            if (matches.Count < _gridConfig.MinMatchCount)
+                return;
+            ProcessMatches(matches);
         }
-
         private void ProcessMatches(List<Vector2Int> matches)
         {
-            List<Vector2Int> destroyedCells = _damageService.ApplyMatchDamage(matches);
-
+            List<Vector2Int> damagedObstacles = _obstacleService.GetAffectedObstacles(matches);
+            DamageObstacles(damagedObstacles);
             if (_powerUpService.TryGetPowerUp(matches, out PowerUpType powerUpType))
             {
-                foreach (var pos in destroyedCells)
-                {
-                    _gridModel.ClearCell(pos.x, pos.y);
-
-                    if (matches.Contains(pos))
-                        continue;
-                    _gridView.RemoveCell(pos.x, pos.y);
-                }
-
-                destroyedCells.Remove(matches[0]);
-                CellData powerUp = _gridModel.SpawnPowerUp(powerUpType, matches[0]);
-                _gridView.CreatePowerUp(matches, powerUp, onComplete: () =>
-                {
-                    _gridModel.SetCellFallable(powerUp.ToggleCanFall());
-                    _cascadeService.ProcessCascades();
-                });
+                CreatePowerUp(matches, powerUpType);
             }
             else
             {
-                foreach (var pos in destroyedCells)
+                foreach (var match in matches)
                 {
-                    _gridView.RemoveCell(pos.x, pos.y);
-                    _gridModel.ClearCell(pos.x, pos.y);
+                    _gridModel.ClearCell(match.x, match.y);
+                    _gridView.RemoveCell(match.x, match.y);
                 }
-
-                _cascadeService.ProcessCascades();
             }
+        }
+        private void DamageObstacles(List<Vector2Int> obstacles)
+        {
+            foreach (var obstaclePos in obstacles)
+            {
+                CellData damagedObstacle = _gridModel.GetCell(obstaclePos.x, obstaclePos.y).TakeDamage();
+
+                if (damagedObstacle.Health <= 0)
+                {
+                    _gridModel.ClearCell(obstaclePos.x, obstaclePos.y);
+                    _gridView.RemoveCell(obstaclePos.x, obstaclePos.y);
+                }
+                else
+                {
+                    _gridModel.SetCell(obstaclePos.x, obstaclePos.y, damagedObstacle);
+                    //TODO: gridview damage animation
+                }
+            }
+        }
+        private void CreatePowerUp(List<Vector2Int> matches, PowerUpType powerUpType)
+        {
+            foreach (var match in matches)
+            {
+                _gridModel.SetCellState(match.x, match.y, CellState.Matched);
+            }
+            _gridView.CreatePowerUp(matches, () =>
+            {
+                foreach (var match in matches)
+                {
+                    _gridModel.ClearCell(match.x, match.y);
+                }
+                CellData powerUp = _gridModel.SetPowerUp(matches[0], powerUpType);
+                _gridView.CreateCell(matches[0].x, matches[0].y, powerUp);
+            });
         }
     }
 }

@@ -31,13 +31,11 @@ namespace Game.Features.Grid.Model
             _cells = new CellData[Width, Height];
             for (int x = 0; x < Width; x++)
             {
-                for (int y = 0; y < Height - 2; y++)
+                for (int y = 0; y < Height - 1; y++)
                 {
                     _cells[x, y] = _cellFactory.CreateRandomCube(new Vector2Int(x,y));
                 }
-                int spawnY = Height - 2;
-                _cells[x, spawnY] = _cellFactory.CreateObstacle(ObstacleType.Rock, new Vector2Int(x, spawnY));
-                spawnY++;
+                int spawnY = Height - 1;
                 _cells[x, spawnY] = CellData.CreateEmpty(new Vector2Int(x, spawnY));
             }
         }
@@ -53,7 +51,7 @@ namespace Game.Features.Grid.Model
             _cells[x, spawnY] = _cellFactory.CreateRandomCube(new Vector2Int(x, spawnY));
         }
         
-        public CellData SpawnPowerUp(PowerUpType powerUpType, Vector2Int position )
+        public CellData SetPowerUp(Vector2Int position, PowerUpType powerUpType)
         {
             _cells[position.x, position.y] = _cellFactory.CreatePowerUp(powerUpType, position);
             return _cells[position.x, position.y];
@@ -80,11 +78,6 @@ namespace Game.Features.Grid.Model
             {
                 _cells[x, y] = _cells[x, y].WithState(newState);
             }
-        }
-
-        public void SetCellFallable(CellData cellData)
-        {
-            _cells[cellData.Position.x, cellData.Position.y] = cellData;
         }
 
         public void ClearCell(int x, int y)

@@ -1,6 +1,5 @@
 using Game.Core.Data;
 using UnityEngine;
-
 namespace Game.Services
 {
     public class CellFactory
@@ -12,7 +11,6 @@ namespace Game.Services
             _cellConfig = cellConfig;
             _cellConfig.Initialize();
         }
-
         public CellData CreateCube(CubeType cubeType, Vector2Int position)
         {
             var mapping = _cellConfig.GetCubeMapping(cubeType);
@@ -24,7 +22,6 @@ namespace Game.Services
             return CellData.CreateCube(
                 cubeType, 
                 position, 
-                mapping.health, 
                 mapping.canFall
             );
         }
@@ -47,7 +44,6 @@ namespace Game.Services
             return CellData.CreatePowerUp(
                 powerUpType, 
                 position, 
-                mapping.health, 
                 mapping.canFall
             );
         }

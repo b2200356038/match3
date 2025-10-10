@@ -12,7 +12,6 @@ namespace Game.Core.Data
             public CubeType cubeType; 
             public GameObject prefab;
             [Header("Properties")]
-            public int health = 1;
             public bool canFall = true;
         }
 
@@ -32,7 +31,6 @@ namespace Game.Core.Data
             public PowerUpType powerUpType;
             public GameObject prefab;
             [Header("Properties")]
-            public int health = 1;
             public bool canFall = true;
         }
 

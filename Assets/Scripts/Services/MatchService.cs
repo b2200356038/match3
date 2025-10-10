@@ -21,11 +21,10 @@ namespace Game.Services
             CellData startSlot = _gridModel.GetCell(startX, startY);
             List<Vector2Int> matches = new List<Vector2Int>();
             
-            if (!startSlot.IsCube || !startSlot.CanClick)
+            if (!startSlot.IsCube || !startSlot.CanMatch)
             {
                 return matches;
             }
-    
             bool[,] visited = new bool[_gridModel.Width, _gridModel.Height];
             FindMatchesDFS(startX, startY, startSlot.CubeType, matches, visited);
             if (matches.Count < _minMatchCount)
@@ -58,52 +57,9 @@ namespace Game.Services
             FindMatchesDFS(x - 1, y, targetType, matches, visited);
         }
 
-        public Dictionary<int, List<Vector2Int>> FindAllMatches()
-        {
-            var allMatches = new Dictionary<int, List<Vector2Int>>();
-            var globalVisited = new bool[_gridModel.Width, _gridModel.Height];
-            int matchId = 0;
-            
-            for (int x = 0; x < _gridModel.Width; x++)
-            {
-                for (int y = 0; y < _gridModel.Height; y++)
-                {
-                    if (globalVisited[x, y])
-                        continue;
-
-                    CellData slot = _gridModel.GetCell(x, y);
-                    
-                    if (!slot.IsCube || !slot.CanClick)
-                        continue;
-
-                    List<Vector2Int> matches = new List<Vector2Int>();
-                    bool[,] visited = new bool[_gridModel.Width, _gridModel.Height];
-                    FindMatchesDFS(x, y, slot.CubeType, matches, visited);
-                    
-                    if (matches.Count >= _minMatchCount)
-                    {
-                        allMatches[matchId] = matches;
-                        matchId++;
-                        
-                        foreach (var pos in matches)
-                        {
-                            globalVisited[pos.x, pos.y] = true;
-                        }
-                    }
-                }
-            }
-            
-            return allMatches;
-        }
-
         public bool HasMatchAt(int x, int y)
         {
             return FindMatches(x, y).Count > 0;
-        }
-
-        public bool HasAnyMatches()
-        {
-            return FindAllMatches().Count > 0;
         }
     }
 }

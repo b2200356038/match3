@@ -21,7 +21,7 @@ namespace Game.Core
         private MatchService _matchService;
         private PhysicsService _physicsService;
         private CascadeService _cascadeService;
-        private DamageService _damageService;
+        private ObstacleService _obstacleService;
         private PowerUpService _powerUpService;
         private CellFactory _cellFactory;
         private RefillService _refillService;
@@ -45,12 +45,12 @@ namespace Game.Core
             _matchService = new MatchService(_gridModel, _gridConfig.MinMatchCount);
             _physicsService = new PhysicsService(_gridConfig.gravity, _gridConfig.CellSize);
             _refillService = new RefillService(_gridModel, _gridConfig);
-            _damageService = new DamageService(_gridModel);
-            _cascadeService = new CascadeService(_gridModel, _gridView, _physicsService, _gridConfig);
-            _powerUpService = new PowerUpService(_cellConfig);
+            _obstacleService = new ObstacleService(_gridModel);
+            _cascadeService = new CascadeService(_gridModel);
+            _powerUpService = new PowerUpService(_gridModel,_cellConfig);
             _gridView.Initialize(_gridConfig.Width, _gridConfig.Height, _gridConfig.CellSize, _cellPoolService);
             
-            _gridPresenter = new GridPresenter(_gridModel, _gridView, _matchService, _cascadeService, _damageService, _powerUpService, _gridConfig);
+            _gridPresenter = new GridPresenter(_gridModel, _gridView, _matchService, _cascadeService, _obstacleService, _powerUpService, _physicsService,_gridConfig);
             _gridPresenter.Initialize();
             _gridPresenter.StartGame();
         }

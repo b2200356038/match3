@@ -14,10 +14,8 @@ namespace Game.Features.Grid.View
         [SerializeField] private SpriteRenderer _backgroundSprite;
         [SerializeField] private SpriteRenderer _maskSprite;
         [SerializeField] private Transform _gridContainer;
-
         [Header("Settings")]
         [SerializeField] private float _cellSize = 1f;
-
         public event Action<int, int> OnCellClicked;
 
         private PoolableObject[,] _cellObjects;
@@ -63,7 +61,7 @@ namespace Game.Features.Grid.View
             input.Initialize(x, y, this);
             _cellObjects[x, y] = cellObj;
         }
-        public void CreatePowerUp(List<Vector2Int> matches, CellData powerUpData, Action onComplete)
+        public void CreatePowerUp(List<Vector2Int> matches, Action onComplete)
         {
             if (matches == null || matches.Count == 0) return;
             PoolableObject clickedCell = _cellObjects[matches[0].x, matches[0].y];
@@ -83,14 +81,12 @@ namespace Game.Features.Grid.View
             }
             sequence.OnComplete(() =>
             {
-                CreateCell(matches[0].x, matches[0].y, powerUpData);
                 onComplete?.Invoke();
             });
         }
         public void RemoveCell(int x, int y)
         {
             if (!IsValidPosition(x, y)) return;
-
             PoolableObject cellObj = _cellObjects[x, y];
             if (cellObj != null)
             {
