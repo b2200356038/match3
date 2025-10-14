@@ -1,12 +1,11 @@
 namespace Game.Core.Data
 {
-
-    public enum CellType
+    public enum CellState
     {
-        Empty,
-        Cube,
-        Obstacle,
-        PowerUp
+        Idle,
+        Falling,
+        Matched,
+        Locked
     }
     
     public enum CubeType
@@ -16,7 +15,6 @@ namespace Game.Core.Data
         Blue,
         Yellow
     }
-    
     
     public enum ObstacleType
     {
@@ -30,22 +28,5 @@ namespace Game.Core.Data
         RowRocket,
         ColumnRocket,
         Bomb
-    }
-    
-    public enum CellState
-    {
-        Idle,
-        Moving,
-        Matched,
-        Disabled
-    }
-
-    public enum GameState
-    {
-        Initializing,
-        Playing,
-        Processing,
-        Win,
-        Lose
     }
 }

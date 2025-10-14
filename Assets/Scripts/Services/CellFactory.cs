@@ -1,5 +1,7 @@
+using Game.Core;
 using Game.Core.Data;
 using UnityEngine;
+
 namespace Game.Services
 {
     public class CellFactory
@@ -11,58 +13,48 @@ namespace Game.Services
             _cellConfig = cellConfig;
             _cellConfig.Initialize();
         }
-        public CellData CreateCube(CubeType cubeType, Vector2Int position)
-        {
-            var mapping = _cellConfig.GetCubeMapping(cubeType);
-            if (mapping == null)
-            {
-                return CellData.CreateEmpty(position);
-            }
 
-            return CellData.CreateCube(
-                cubeType, 
-                position, 
-                mapping.canFall
-            );
+        public CubeCell CreateCube(CubeType cubeType, Vector2Int position)
+        {
+            var prefab = _cellConfig.GetCubePrefab(cubeType);
+            if (prefab == null) return null;
+
+            var cell = Object.Instantiate(prefab).GetComponent<CubeCell>();
+            cell.Init(position);
+            cell.SetColor(cubeType);
+            return cell;
         }
 
-        public CellData CreateObstacle(ObstacleType obstacleType, Vector2Int position)
+        public ObstacleCell CreateObstacle(ObstacleType obstacleType, Vector2Int position)
         {
-            var mapping = _cellConfig.GetObstacleMapping(obstacleType);
-            
-            return CellData.CreateObstacle(
-                obstacleType, 
-                position, 
-                mapping.health, 
-                mapping.canFall
-            );
+            var prefab = _cellConfig.GetObstaclePrefab(obstacleType);
+            if (prefab == null) return null;
+
+            var cell = Object.Instantiate(prefab).GetComponent<ObstacleCell>();
+            cell.Init(position);
+            return cell;
         }
 
-        public CellData CreatePowerUp(PowerUpType powerUpType, Vector2Int position)
+        public PowerUpCell CreatePowerUp(PowerUpType powerUpType, Vector2Int position)
         {
-            var mapping = _cellConfig.GetPowerUpMapping(powerUpType);
-            return CellData.CreatePowerUp(
-                powerUpType, 
-                position, 
-                mapping.canFall
-            );
+            var prefab = _cellConfig.GetPowerUpPrefab(powerUpType);
+            if (prefab == null) return null;
+
+            var cell = Object.Instantiate(prefab).GetComponent<PowerUpCell>();
+            cell.Init(position);
+            return cell;
         }
 
-        public CellData CreateRandomCube(Vector2Int position)
+        public CubeCell CreateRandomCube(Vector2Int position)
         {
             var allCubes = _cellConfig.GetAllCubeTypes();
             if (allCubes == null || allCubes.Count == 0)
-                return CellData.CreateEmpty(position);
+                return null;
 
             var randomIndex = Random.Range(0, allCubes.Count);
             var randomCubeType = allCubes[randomIndex];
 
             return CreateCube(randomCubeType, position);
-        }
-
-        public CellData CreateEmpty(Vector2Int position)
-        {
-            return CellData.CreateEmpty(position);
         }
     }
 }

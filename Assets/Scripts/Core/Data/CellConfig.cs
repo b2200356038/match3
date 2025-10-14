@@ -9,10 +9,8 @@ namespace Game.Core.Data
         [System.Serializable]
         public class CubePrefabMapping
         {
-            public CubeType cubeType; 
+            public CubeType cubeType;
             public GameObject prefab;
-            [Header("Properties")]
-            public bool canFall = true;
         }
 
         [System.Serializable]
@@ -20,9 +18,6 @@ namespace Game.Core.Data
         {
             public ObstacleType obstacleType;
             public GameObject prefab;
-            [Header("Properties")]
-            public int health = 1;
-            public bool canFall = false;
         }
 
         [System.Serializable]
@@ -30,70 +25,55 @@ namespace Game.Core.Data
         {
             public PowerUpType powerUpType;
             public GameObject prefab;
-            [Header("Properties")]
-            public bool canFall = true;
         }
 
-        [Header("Cube Prefabs")] [SerializeField]
-        private List<CubePrefabMapping> _cubePrefabs;
+        [Header("Cube Prefabs")]
+        [SerializeField] private List<CubePrefabMapping> cubePrefabs;
 
-        [Header("Obstacle Prefabs")] [SerializeField]
-        private List<ObstaclePrefabMapping> _obstaclePrefabs;
+        [Header("Obstacle Prefabs")]
+        [SerializeField] private List<ObstaclePrefabMapping> obstaclePrefabs;
 
-        [Header("PowerUp Prefabs")] [SerializeField]
-        private List<PowerUpPrefabMapping> _powerUpPrefabs;
-        
-        private Dictionary<CubeType, CubePrefabMapping> _cubeDict;
-        private Dictionary<ObstacleType, ObstaclePrefabMapping> _obstacleDict;
-        private Dictionary<PowerUpType, PowerUpPrefabMapping> _powerUpDict;
-        
+        [Header("PowerUp Prefabs")]
+        [SerializeField] private List<PowerUpPrefabMapping> powerUpPrefabs;
+
+        private Dictionary<CubeType, GameObject> _cubeDict;
+        private Dictionary<ObstacleType, GameObject> _obstacleDict;
+        private Dictionary<PowerUpType, GameObject> _powerUpDict;
+
         public void Initialize()
         {
-            _cubeDict = new Dictionary<CubeType, CubePrefabMapping>();
-            foreach (var mapping in _cubePrefabs)
-                _cubeDict[mapping.cubeType] = mapping;
+            _cubeDict = new Dictionary<CubeType, GameObject>();
+            foreach (var mapping in cubePrefabs)
+                _cubeDict[mapping.cubeType] = mapping.prefab;
 
-            _obstacleDict = new Dictionary<ObstacleType, ObstaclePrefabMapping>();
-            foreach (var mapping in _obstaclePrefabs)
-                _obstacleDict[mapping.obstacleType] = mapping;
+            _obstacleDict = new Dictionary<ObstacleType, GameObject>();
+            foreach (var mapping in obstaclePrefabs)
+                _obstacleDict[mapping.obstacleType] = mapping.prefab;
 
-            _powerUpDict = new Dictionary<PowerUpType, PowerUpPrefabMapping>();
-            foreach (var mapping in _powerUpPrefabs)
-                _powerUpDict[mapping.powerUpType] = mapping;
+            _powerUpDict = new Dictionary<PowerUpType, GameObject>();
+            foreach (var mapping in powerUpPrefabs)
+                _powerUpDict[mapping.powerUpType] = mapping.prefab;
         }
-        
-        public GameObject GetPrefab(CellData cellData)
-        {
-            if (cellData.IsEmpty) return null;
 
-            return cellData.CellType switch
-            {
-                CellType.Cube => _cubeDict.GetValueOrDefault(cellData.CubeType)?.prefab,
-                CellType.Obstacle => _obstacleDict.GetValueOrDefault(cellData.ObstacleType)?.prefab,
-                CellType.PowerUp => _powerUpDict.GetValueOrDefault(cellData.PowerUpType)?.prefab,
-                _ => null 
-            };
-        }
-        
-        public CubePrefabMapping GetCubeMapping(CubeType type)
+        public GameObject GetCubePrefab(CubeType type)
         {
             return _cubeDict.GetValueOrDefault(type);
         }
-        
-        public ObstaclePrefabMapping GetObstacleMapping(ObstacleType type)
+
+        public GameObject GetObstaclePrefab(ObstacleType type)
         {
             return _obstacleDict.GetValueOrDefault(type);
         }
-        
-        public PowerUpPrefabMapping GetPowerUpMapping(PowerUpType type)
+
+        public GameObject GetPowerUpPrefab(PowerUpType type)
         {
             return _powerUpDict.GetValueOrDefault(type);
         }
-        
+
         public List<CubeType> GetAllCubeTypes()
         {
             List<CubeType> types = new List<CubeType>();
-            foreach (var mapping in _cubePrefabs)
+            foreach (var mapping in cubePrefabs)
             {
                 if (mapping.prefab != null)
                     types.Add(mapping.cubeType);
