@@ -36,7 +36,6 @@ namespace Game.Services
             {
                 return 0.1f;
             }
-
             float sqrtDisc = Mathf.Sqrt(discriminant);
             float t1 = (-b + sqrtDisc) / (2 * a);
             float t2 = (-b - sqrtDisc) / (2 * a);

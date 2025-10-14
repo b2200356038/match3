@@ -18,7 +18,6 @@ namespace Game.Core
         private CellFactory _cellFactory;
         private MatchService _matchService;
         private PhysicsService _physicsService;
-
         public int Width { get; private set; }
         public int VisibleHeight { get; private set; }
         public int TotalHeight { get; private set; }
@@ -26,6 +25,8 @@ namespace Game.Core
 
         private List<Vector2Int> _spawnerPositions = new();
         private bool _inputEnabled = true;
+        private Dictionary<Vector2Int, System.Action> _cellDeletedCallbacks = new Dictionary<Vector2Int, System.Action>();
+        private Dictionary<Vector2Int, System.Action> _cellMatchedCallbacks = new Dictionary<Vector2Int, System.Action>();
 
         public void Initialize(GridConfig gridConfig, CellConfig cellConfig)
         {
@@ -111,9 +112,7 @@ namespace Game.Core
             if (!_inputEnabled) return;
             
             if (y >= VisibleHeight) return;
-            
             Cell cell = _cells[x, y];
-            
             if (cell == null) return;
             if (cell.State != CellState.Idle) return;
 
@@ -125,14 +124,23 @@ namespace Game.Core
             {
             }
         }
-
         private void ProcessMatch(int x, int y)
         {
             var matches = _matchService.FindMatches(_cells, Width, TotalHeight, x, y);
 
             if (matches.Count < _gridConfig.MinMatchCount)
                 return;
+            
+            foreach (var matchPos in matches)
+            {
+                if (_cellMatchedCallbacks.TryGetValue(matchPos, out var callback))
+                {
+                    callback?.Invoke();
+                }
+            }
+            
             DamageNearbyObstacles(matches);
+            
             if (TryCreatePowerUp(matches, out PowerUpType powerUpType))
             {
                 CreatePowerUp(matches, powerUpType);
@@ -182,8 +190,15 @@ namespace Game.Core
                         {
                             cellInput.Disable();
                         }
-
-                        Destroy(cell.gameObject);
+                        if (cell is CubeCell cubeCell)
+                        {
+                            _cellFactory.ReturnCube(cubeCell);
+                        }
+                        else
+                        {
+                            Destroy(cell.gameObject);
+                        }
+                        
                         _cells[match.x, match.y] = null;
                     }
                     CheckAbove(match.x, match.y + 1, velocity: 0f);
@@ -191,7 +206,6 @@ namespace Game.Core
                 CreatePowerUpAt(originPos.x, originPos.y, powerUpType);
             });
         }
-
         private void AnimatePowerUpCreation(List<Vector2Int> matches, Vector2Int targetPos, System.Action onComplete)
         {
             Cell targetCell = _cells[targetPos.x, targetPos.y];
@@ -199,8 +213,9 @@ namespace Game.Core
             {
                 onComplete?.Invoke();
                 return;
+                
+                
             }
-
             Vector3 targetWorldPos = targetCell.transform.position;
             int animationCount = matches.Count;
             int completedCount = 0;
@@ -231,13 +246,19 @@ namespace Game.Core
                     });
             }
         }
-
         private void CreatePowerUpAt(int x, int y, PowerUpType powerUpType)
         {
             Cell oldCell = _cells[x, y];
             if (oldCell != null)
             {
-                Destroy(oldCell.gameObject);
+                if (oldCell is CubeCell cubeCell)
+                {
+                    _cellFactory.ReturnCube(cubeCell);
+                }
+                else
+                {
+                    Destroy(oldCell.gameObject);
+                }
             }
             var powerUpCell = _cellFactory.CreatePowerUp(powerUpType, new Vector2Int(x, y));
             if (powerUpCell != null)
@@ -249,7 +270,6 @@ namespace Game.Core
                 AddCellInput(powerUpCell, x, y);
             }
         }
-
         private void DeleteMatches(List<Vector2Int> matches)
         {
             foreach (var pos in matches)
@@ -264,18 +284,26 @@ namespace Game.Core
                     {
                         cellInput.Disable();
                     }
-
-                    Destroy(cell.gameObject);
+                    if (_cellDeletedCallbacks.TryGetValue(pos, out var callback))
+                    {
+                        callback?.Invoke();
+                    }
+                    if (cell is CubeCell cubeCell)
+                    {
+                        _cellFactory.ReturnCube(cubeCell);
+                    }
+                    else
+                    {
+                        Destroy(cell.gameObject);
+                    }
                     _cells[pos.x, pos.y] = null;
                 }
             }
-
             foreach (var match in matches)
             {
                 CheckAbove(match.x, match.y + 1, velocity: 0f);
             }
         }
-
         private void DamageNearbyObstacles(List<Vector2Int> matches)
         {
             HashSet<Vector2Int> checkedPositions = new HashSet<Vector2Int>();
@@ -335,14 +363,11 @@ namespace Game.Core
         {
             if (!IsValidPosition(x, y))
                 return false;
-
             Cell cell = _cells[x, y];
             if (cell == null || !cell.CanFall)
                 return false;
-
             if (y > 0 && _cells[x, y - 1] == null)
                 return true;
-
             return false;
         }
 
@@ -455,10 +480,55 @@ namespace Game.Core
                 -y
             );
         }
-
-        public void ToggleInput(bool enabled)
+        
+        public void RegisterDeletedCallback(Vector2Int position, System.Action callback)
         {
-            _inputEnabled = enabled;
+            if (!_cellDeletedCallbacks.ContainsKey(position))
+            {
+                _cellDeletedCallbacks[position] = callback;
+            }
+            else
+            {
+                _cellDeletedCallbacks[position] += callback;
+            }
+        }
+        
+        public void UnregisterDeletedCallback(Vector2Int position, System.Action callback)
+        {
+            if (!_cellDeletedCallbacks.ContainsKey(position))
+                return;
+            
+            _cellDeletedCallbacks[position] -= callback;
+            
+            if (_cellDeletedCallbacks[position] == null)
+            {
+                _cellDeletedCallbacks.Remove(position);
+            }
+        }
+        
+        public void RegisterMatchedCallback(Vector2Int position, System.Action callback)
+        {
+            if (!_cellMatchedCallbacks.ContainsKey(position))
+            {
+                _cellMatchedCallbacks[position] = callback;
+            }
+            else
+            {
+                _cellMatchedCallbacks[position] += callback;
+            }
+        }
+        
+        public void UnregisterMatchedCallback(Vector2Int position, System.Action callback)
+        {
+            if (!_cellMatchedCallbacks.ContainsKey(position))
+                return;
+            
+            _cellMatchedCallbacks[position] -= callback;
+            
+            if (_cellMatchedCallbacks[position] == null)
+            {
+                _cellMatchedCallbacks.Remove(position);
+            }
         }
     }
 }
