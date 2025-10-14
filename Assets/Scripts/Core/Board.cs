@@ -55,7 +55,6 @@ namespace Game.Core
         {
             _cells = new Cell[Width, TotalHeight];
 
-            // Görünen kısmı doldur (0 to VisibleHeight-1)
             for (int x = 0; x < Width; x++)
             {
                 for (int y = 0; y < VisibleHeight; y++)
@@ -72,7 +71,6 @@ namespace Game.Core
                 }
             }
 
-            // Spawner pozisyonlarını kaydet (en üst satırlar)
             for (int x = 0; x < Width; x++)
             {
                 for (int spawnRow = 0; spawnRow < _gridConfig.SpawnRows; spawnRow++)
@@ -112,7 +110,6 @@ namespace Game.Core
         {
             if (!_inputEnabled) return;
             
-            // Sadece görünen alan tıklanabilir
             if (y >= VisibleHeight) return;
             
             Cell cell = _cells[x, y];
@@ -126,7 +123,6 @@ namespace Game.Core
             }
             else if (cell is PowerUpCell powerUp)
             {
-                Debug.Log($"PowerUp clicked at ({x}, {y}) - Not implemented yet");
             }
         }
 
@@ -136,30 +132,144 @@ namespace Game.Core
 
             if (matches.Count < _gridConfig.MinMatchCount)
                 return;
-
-            // Önce obstacle'lara damage ver
             DamageNearbyObstacles(matches);
+            if (TryCreatePowerUp(matches, out PowerUpType powerUpType))
+            {
+                CreatePowerUp(matches, powerUpType);
+            }
+            else
+            {
+                DeleteMatches(matches);
+            }
+        }
 
-            // Sonra match'leri sil
+        private bool TryCreatePowerUp(List<Vector2Int> matches, out PowerUpType powerUpType)
+        {
+            powerUpType = PowerUpType.Bomb;
+            if (matches.Count < 4)
+                return false;
+            if (matches.Count >= 7)
+            {
+                powerUpType = PowerUpType.Bomb;
+                return true;
+            }
+            int random = Random.Range(0, 2);
+            powerUpType = random == 0 ? PowerUpType.RowRocket : PowerUpType.ColumnRocket;
+            return true;
+        }
+
+        private void CreatePowerUp(List<Vector2Int> matches, PowerUpType powerUpType)
+        {
+            Vector2Int originPos = matches[0];
             foreach (var pos in matches)
             {
                 Cell cell = _cells[pos.x, pos.y];
                 if (cell != null)
                 {
                     cell.State = CellState.Matched;
-                    
+                }
+            }
+            AnimatePowerUpCreation(matches, originPos, () =>
+            {
+                foreach (var match in matches)
+                {
+                    if (match == originPos) continue;
+                    Cell cell = _cells[match.x, match.y];
+                    if (cell != null)
+                    {
+                        var cellInput = cell.GetComponent<CellInput>();
+                        if (cellInput != null)
+                        {
+                            cellInput.Disable();
+                        }
+
+                        Destroy(cell.gameObject);
+                        _cells[match.x, match.y] = null;
+                    }
+                    CheckAbove(match.x, match.y + 1, velocity: 0f);
+                }
+                CreatePowerUpAt(originPos.x, originPos.y, powerUpType);
+            });
+        }
+
+        private void AnimatePowerUpCreation(List<Vector2Int> matches, Vector2Int targetPos, System.Action onComplete)
+        {
+            Cell targetCell = _cells[targetPos.x, targetPos.y];
+            if (targetCell == null)
+            {
+                onComplete?.Invoke();
+                return;
+            }
+
+            Vector3 targetWorldPos = targetCell.transform.position;
+            int animationCount = matches.Count;
+            int completedCount = 0;
+
+            foreach (var pos in matches)
+            {
+                Cell cell = _cells[pos.x, pos.y];
+                if (cell == null) continue;
+
+                var cellInput = cell.GetComponent<CellInput>();
+                if (cellInput != null)
+                {
+                    cellInput.Disable();
+                }
+                cell.transform.DOMove(targetWorldPos, 0.2f)
+                    .SetEase(Ease.InSine)
+                    .OnComplete(() =>
+                    {
+                        if (cell != targetCell)
+                        {
+                            cell.gameObject.SetActive(false);
+                        }
+                        completedCount++;
+                        if (completedCount >= animationCount)
+                        {
+                            onComplete?.Invoke();
+                        }
+                    });
+            }
+        }
+
+        private void CreatePowerUpAt(int x, int y, PowerUpType powerUpType)
+        {
+            Cell oldCell = _cells[x, y];
+            if (oldCell != null)
+            {
+                Destroy(oldCell.gameObject);
+            }
+            var powerUpCell = _cellFactory.CreatePowerUp(powerUpType, new Vector2Int(x, y));
+            if (powerUpCell != null)
+            {
+                _cells[x, y] = powerUpCell;
+                powerUpCell.transform.position = GetWorldPosition(x, y);
+                powerUpCell.transform.SetParent(_gridContainer);
+
+                AddCellInput(powerUpCell, x, y);
+            }
+        }
+
+        private void DeleteMatches(List<Vector2Int> matches)
+        {
+            foreach (var pos in matches)
+            {
+                Cell cell = _cells[pos.x, pos.y];
+                if (cell != null)
+                {
+                    cell.State = CellState.Matched;
+
                     var cellInput = cell.GetComponent<CellInput>();
                     if (cellInput != null)
                     {
                         cellInput.Disable();
                     }
-                    
+
                     Destroy(cell.gameObject);
                     _cells[pos.x, pos.y] = null;
                 }
             }
 
-            // Cascade başlat
             foreach (var match in matches)
             {
                 CheckAbove(match.x, match.y + 1, velocity: 0f);
@@ -169,29 +279,29 @@ namespace Game.Core
         private void DamageNearbyObstacles(List<Vector2Int> matches)
         {
             HashSet<Vector2Int> checkedPositions = new HashSet<Vector2Int>();
-            
-            Vector2Int[] directions = { 
+
+            Vector2Int[] directions = {
                 new Vector2Int(0, 1),
                 new Vector2Int(1, 0),
                 new Vector2Int(0, -1),
                 new Vector2Int(-1, 0)
             };
-            
+
             foreach (var match in matches)
             {
                 foreach (var dir in directions)
                 {
                     Vector2Int pos = match + dir;
-                    
+
                     if (checkedPositions.Contains(pos)) continue;
                     if (!IsValidPosition(pos.x, pos.y)) continue;
-                    
+
                     Cell cell = _cells[pos.x, pos.y];
                     if (cell is ObstacleCell obstacle)
                     {
                         obstacle.TakeDamage();
                         checkedPositions.Add(pos);
-                        
+
                         if (obstacle.Health <= 0)
                         {
                             _cells[pos.x, pos.y] = null;
@@ -209,13 +319,11 @@ namespace Game.Core
 
             Cell currentCell = _cells[x, y];
 
-            // Üstte cell var mı ve düşebilir mi?
             if (currentCell != null && currentCell.CanFall && currentCell.State == CellState.Idle)
             {
                 currentCell.State = CellState.Falling;
                 FallOneStep(x, y, velocity);
             }
-            // Boş ve üstte spawner var mı?
             else if (currentCell == null && _spawnerPositions.Contains(new Vector2Int(x, y)))
             {
                 SpawnNewCell(x, y);
@@ -246,7 +354,7 @@ namespace Game.Core
                 _cells[x, y] = newCell;
                 newCell.transform.SetParent(_gridContainer);
                 newCell.transform.position = GetWorldPosition(x, y);
-                
+
                 AddCellInput(newCell, x, y);
             }
         }
@@ -255,13 +363,13 @@ namespace Game.Core
         {
             int targetY = y - 1;
             Cell cell = _cells[x, y];
-            
+
             _cells[x, targetY] = cell;
             _cells[x, targetY].State = CellState.Falling;
             _cells[x, y] = null;
-            
+
             cell.MoveTo(new Vector2Int(x, targetY));
-            
+
             var cellInput = cell.GetComponent<CellInput>();
             if (cellInput != null)
             {
@@ -273,11 +381,11 @@ namespace Game.Core
 
             DOVirtual.DelayedCall(_gridConfig.cascadeDelay, () => CheckAbove(x, y + 1, velocity));
 
-            MoveCellAnimated(x, y, x, targetY, duration, velocity, 
+            MoveCellAnimated(x, y, x, targetY, duration, velocity,
                 onComplete: () => OnCellLanded(x, targetY, nextVelocity));
         }
 
-        private void MoveCellAnimated(int fromX, int fromY, int toX, int toY, 
+        private void MoveCellAnimated(int fromX, int fromY, int toX, int toY,
             float duration, float initialVelocity, System.Action onComplete)
         {
             Cell cell = _cells[toX, toY];
@@ -290,8 +398,11 @@ namespace Game.Core
             Vector3 startPos = GetWorldPosition(fromX, fromY);
             Vector3 targetPos = GetWorldPosition(toX, toY);
             startPos.z = targetPos.z;
+
             cell.transform.position = startPos;
+
             float distance = Vector3.Distance(startPos, targetPos);
+
             DOTween.To(() => 0f, t =>
             {
                 float currentDistance = initialVelocity * t + 0.5f * _gridConfig.gravity * t * t;
@@ -340,8 +451,14 @@ namespace Game.Core
 
             return new Vector3(
                 offsetX + (x * CellSize),
-                offsetY + (y * CellSize), -y
+                offsetY + (y * CellSize),
+                -y
             );
+        }
+
+        public void ToggleInput(bool enabled)
+        {
+            _inputEnabled = enabled;
         }
     }
 }

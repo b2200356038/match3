@@ -8,7 +8,7 @@ namespace Game.Core.Data
         [Header("Grid Dimensions")]
         [SerializeField] private int width = 8;
         [SerializeField] private int height = 8;
-        [SerializeField] private int spawnRows = 1; // Kaç satır spawner olacak
+        [SerializeField] private int spawnRows = 1;
 
         [Header("Cell Settings")]
         [SerializeField] private float cellSize = 1f;
